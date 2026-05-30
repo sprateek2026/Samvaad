@@ -45,10 +45,16 @@ app.include_router(suggestions.router, prefix="/api/suggestions", tags=["Suggest
 
 
 def _auto_seed_if_empty():
-    """On a fresh database (e.g. a new Railway disk), populate ward, PIN,
-    representative and category data so GIS lookups work — no manual shell
-    commands needed. Idempotent: skips when wards already exist. Never raises,
-    so a seeding problem can't stop the API from starting."""
+    """On a fresh database (e.g. a new Railway disk), populate the full Pune
+    reference dataset so GIS lookups and representative lookups work — no manual
+    shell commands needed. Runs the same three seed scripts as a local setup, in
+    order, ending at the correct 41-ward delimitation with authoritative
+    corporator/MLA/MP data. Idempotent (skips when wards already exist) and never
+    raises, so a seeding problem can't stop the API from starting."""
+    # PMC 2025/26 delimitation = 41 wards. Any other count (0 = fresh disk,
+    # or 58 = base seed before cleanup) means the data is missing or stale, so
+    # re-run the chain to converge on the correct state.
+    EXPECTED_WARDS = 41
     try:
         from .database import get_connection
         conn = get_connection()
@@ -57,23 +63,35 @@ def _auto_seed_if_empty():
             ward_count = row[0] if row else 0
         finally:
             conn.close()
-        if ward_count > 0:
+        if ward_count == EXPECTED_WARDS:
             return
 
+        import subprocess
+        import sys
         repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        seed_path = os.path.join(repo_root, "tools", "seed_database.py")
-        if not os.path.exists(seed_path):
-            print(f"[seed] script not found at {seed_path}; skipping auto-seed")
-            return
+        tools_dir = os.path.join(repo_root, "tools")
+        # Order matters: base seed (58 wards) -> trim to 41 + names -> authoritative reps.
+        scripts = ["seed_database.py", "cleanup_and_seed.py", "seed_all_corporators.py"]
+        # Force UTF-8 so the scripts' ✓/emoji prints can't crash on non-UTF-8 stdout.
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
 
-        print("[seed] wards table empty — running auto-seed...")
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("seed_database", seed_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        mod.main()
-        print("[seed] auto-seed complete")
-    except BaseException as e:  # includes SystemExit from the seed script
+        print(f"[seed] wards={ward_count} (expected {EXPECTED_WARDS}) — running auto-seed chain...")
+        for name in scripts:
+            path = os.path.join(tools_dir, name)
+            if not os.path.exists(path):
+                print(f"[seed] {name} not found; skipping")
+                continue
+            result = subprocess.run(
+                [sys.executable, path], env=env,
+                capture_output=True, text=True, timeout=180,
+            )
+            if result.returncode == 0:
+                print(f"[seed] {name} OK")
+            else:
+                print(f"[seed] {name} failed (rc={result.returncode}): "
+                      f"{(result.stderr or '')[-600:]}")
+        print("[seed] auto-seed chain complete")
+    except BaseException as e:
         print(f"[seed] auto-seed skipped due to error: {e}")
 
 
