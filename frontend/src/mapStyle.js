@@ -9,3 +9,5 @@ const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_API_KEY;
 export const MAP_STYLE = MAPTILER_KEY
   ? `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_KEY}`
   : "https://tiles.openfreemap.org/styles/liberty";
+
+console.log("[map] style source:", MAPTILER_KEY ? "MapTiler" : "OpenFreeMap (no key)");
