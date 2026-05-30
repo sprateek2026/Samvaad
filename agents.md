@@ -47,6 +47,17 @@ python tools/verify_api.py /api/admin/representatives
 - **Frontend:** http://localhost:5173
 - **Health:** http://localhost:8000/health
 
+## Deployment (Production)
+- **Frontend → Vercel.** Stable shareable URL: **`https://samvaad-pune.vercel.app`** (always serves latest `main`). Root directory = `frontend`. `frontend/vercel.json` has the SPA rewrite (all routes → `index.html`).
+  - **Immutable-URL gotcha:** every deploy also gets a frozen `samvaad-<hash>-...vercel.app` that serves that exact build forever — never share those. Only the production domain / `samvaad-git-main-...` auto-update.
+  - **Vercel env vars are baked at BUILD time** — changing one requires a redeploy. Required: `VITE_API_URL=https://samvaad-production-52e5.up.railway.app/api`, `VITE_MAPTILER_API_KEY` (the map silently falls back to keyless OpenFreeMap via `src/mapStyle.js` if absent).
+  - **Deployment Protection / Vercel Authentication** must be OFF (Settings → Deployment Protection) or visitors hit an SSO login wall.
+- **Backend → Railway.** `https://samvaad-production-52e5.up.railway.app` (API under `/api`, health `/health`). Root = `backend`; Nixpacks detects Python via the **root** `requirements.txt`. Start cmd in `nixpacks.toml`. GitHub-connected; usually auto-deploys `main` but sometimes needs a manual **Deploy** from the Deployments tab.
+- **GitHub:** `https://github.com/sprateek2026/Samvaad` — commit + push every change (clean messages, `Co-Authored-By: Claude`).
+- **CORS:** `main.py` reads `ALLOWED_ORIGINS` (comma list) **and** an `allow_origin_regex` (default `https://samvaad[\w-]*\.vercel\.app`), so every Vercel URL for this project is accepted without editing the list. Override via `ALLOWED_ORIGIN_REGEX`.
+- **MapTiler key** is domain-restricted in MapTiler Cloud (allowed origins must list each Vercel host: samvaad-pune, samvaad-gamma, git-main, `localhost:5173`, and `?` for no-Origin). A 403 on the style URL = the requesting domain isn't on that allow-list.
+- **Persistence:** no Railway Volume = SQLite + uploads are ephemeral (wiped each redeploy), but auto-seed (below) re-creates reference data on boot — only user complaints/images would be lost. For durability add a Volume at `/data` with `DATABASE_PATH=/data/samvaad.db`, `UPLOAD_DIR=/data/uploads`.
+
 ## Gotchas
 
 ### Auth
@@ -59,6 +70,7 @@ python tools/verify_api.py /api/admin/representatives
 - **Python 3.14+FastAPI quirk:** Synchronous `get_db()` generator dependency does NOT work with `async def` endpoints. All complaint/CRUD endpoints MUST be `def`, not `async def`. (`img.file.read()` instead of `await img.read()`.)
 - `get_db()` is a bare generator WITHOUT `@contextmanager` decorator (causes `TypeError` in Python 3.14).
 - DB schema (`init_db()` at startup) creates all tables if missing — no Alembic/migrations.
+- **Auto-seed on startup:** `main.py` `_auto_seed_if_empty()` runs after `init_db()`. If `COUNT(*) FROM wards != 41` it runs the full chain (`seed_database.py` → `cleanup_and_seed.py` → `seed_all_corporators.py`) via **subprocess** with `PYTHONIOENCODING=utf-8`, converging on 41 wards + 247 named reps. Self-heals a fresh/stale DB (so Railway needs no manual seeding); skips when already at 41. Never raises — a seed failure can't block API boot. Requires committed `backend/data/pune-2022-wards.geojson`.
 - GIS uses pure Python point-in-polygon (no SpatiaLite). GeoJSON coordinates are `[longitude, latitude]`.
 - **Corporator dashboard shows wrong name:** `dashboard.py:76` queries `w.corporator_a_name` (static seed data from `wards` table) — must use `u.full_name` instead. Affects ALL corporators.
 - **Admin ward dropdown sends internal `wards.id`:** `Admin.jsx:65` used `value={w.id}` (auto-increment) while displaying `#{w.ward_number}` — confusing mismatch. Fixed by sending `ward_number` and resolving to `wards.id` in `admin.py`.
@@ -85,7 +97,7 @@ python tools/verify_api.py /api/admin/representatives
 - Ward seed originally had 58 entries — only wards 1–41 have `corporator_{a,b,c,d}_name` populated. Wards 42–58 are removed via `tools/cleanup_and_seed.py`.
 - `tools/seed_all_corporators.py` populates all 4 slots from the official 2026 winner list (source: Free Press Journal, Jan 17 2026).
 - `users.pin_code` is NOT NULL — admin user creation must include it.
-- `.env` has `DATABASE_PATH=data/samvaad.db` (relative!). `config.py` resolves it against `BASE_DIR` so both seed script (from `tools/`) and backend (from `backend/`) write to the same file.
+- `config.py` `_cfg()` reads **real env vars first** (`os.environ`), then `.env` via `dotenv_values()`, then a default — so Railway dashboard vars like `DATABASE_PATH`/`UPLOAD_DIR` actually take effect (a plain `dotenv_values()`-only read silently ignored them). Default `DATABASE_PATH` is absolute (`BASE_DIR/data/samvaad.db`), so all three seed scripts + the backend resolve to the same file whether run from `tools/` or `backend/`.
 
 ### Shell Gotchas (PowerShell 5.1)
 - **NEVER use `python -c "..."` for multi-line or quote-heavy code** — PowerShell's `\"` escaping inside `"` causes SyntaxErrors before Python even runs. Always use a temp file:
