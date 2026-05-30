@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { complaintAPI } from "../api";
+import { complaintAPI, assetUrl } from "../api";
 import ComplaintTimeline from "../components/ComplaintTimeline";
 import StatusBadge from "../components/ui/StatusBadge";
 import SimpleDrawer from "../components/SimpleDrawer";
@@ -166,7 +166,7 @@ export default function ComplaintDetail({ user }) {
             {complaint.images.map((img) => (
               <button key={img.id} onClick={() => setLightbox(img)}
                 className="relative flex-shrink-0 group">
-                <img src={`http://localhost:8000/${img.file_path}`} alt=""
+                <img src={assetUrl(img.file_path)} alt=""
                   className="h-24 w-24 object-cover rounded-xl border border-gray-100 group-hover:opacity-90 transition-opacity" />
                 <div className="absolute inset-0 rounded-xl flex items-center justify-center
                                 bg-black/0 group-hover:bg-black/20 transition-colors">
@@ -225,7 +225,7 @@ export default function ComplaintDetail({ user }) {
       {/* Image lightbox */}
       <SimpleDrawer isOpen={!!lightbox} onClose={() => setLightbox(null)} title="Photo">
         {lightbox && (
-          <img src={`http://localhost:8000/${lightbox.file_path}`} alt=""
+          <img src={assetUrl(lightbox.file_path)} alt=""
             className="w-full rounded-xl" />
         )}
       </SimpleDrawer>

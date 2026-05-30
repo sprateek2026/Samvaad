@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { assetUrl } from "../api";
 
 export default function RepresentativeAvatar({
   photoPath,
@@ -29,14 +30,7 @@ export default function RepresentativeAvatar({
     return fullName.charAt(0).toUpperCase();
   }
 
-  // Format photo URL
-  function getPhotoUrl(path) {
-    if (!path) return null;
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8000/${path}`;
-  }
-
-  const photoUrl = !imageError ? getPhotoUrl(photoPath) : null;
+  const photoUrl = !imageError ? (assetUrl(photoPath) || null) : null;
   const initials = getInitials(name);
   const sizeClass = sizeClasses[size] || sizeClasses.md;
   const hoverClass = showHover ? "group-hover:scale-105 transition-transform duration-200" : "";

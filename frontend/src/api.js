@@ -1,10 +1,22 @@
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 10000,
 });
+
+// Backend serves uploaded files (photos, complaint images) from its root,
+// NOT under /api — strip the /api suffix to build absolute asset URLs.
+const FILE_BASE_URL = API_URL.replace(/\/api\/?$/, "");
+
+export function assetUrl(path) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${FILE_BASE_URL}/${path.replace(/^\//, "")}`;
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");

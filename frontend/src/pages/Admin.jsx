@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { adminAPI, gisAPI } from "../api";
+import { adminAPI, gisAPI, assetUrl } from "../api";
 import RepresentativeAvatar from "../components/RepresentativeAvatar";
 import SimpleDrawer from "../components/SimpleDrawer";
 import maplibregl from "maplibre-gl";
@@ -510,7 +510,7 @@ function EditRepModal({ rep, loading, onSave, onClose }) {
     mobile: ""
   });
   const [photoFile, setPhotoFile] = useState(null);
-  const [preview, setPreview] = useState(rep.photo_path ? (rep.photo_path.startsWith("http") ? rep.photo_path : `http://localhost:8000/${rep.photo_path}`) : null);
+  const [preview, setPreview] = useState(rep.photo_path ? assetUrl(rep.photo_path) : null);
 
   const showMobile = !rep.id || !rep.user_id;
 
