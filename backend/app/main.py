@@ -15,9 +15,19 @@ _raw_origins = os.environ.get(
 )
 _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
+# Match every Vercel URL for this project (immutable hash deploys, git-branch
+# aliases, the production domain, and any samvaad*.vercel.app custom domain) so
+# we don't have to list each one in ALLOWED_ORIGINS and redeploy. Override via
+# ALLOWED_ORIGIN_REGEX if the frontend ever moves off *.vercel.app.
+_origin_regex = os.environ.get(
+    "ALLOWED_ORIGIN_REGEX",
+    r"https://samvaad[\w-]*\.vercel\.app"
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
