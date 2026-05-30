@@ -132,7 +132,6 @@ export default function Login({ onLogin }) {
                           ? "text-gray-300 cursor-not-allowed"
                           : "text-gray-600 hover:bg-gray-100"
                     }`}>
-                    {locked && isSelected && <span className="mr-1">🔒</span>}
                     {role.charAt(0).toUpperCase() + role.slice(1)}
                   </button>
                 );
