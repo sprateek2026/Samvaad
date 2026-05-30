@@ -1,0 +1,60 @@
+{
+  "app_name": "संवाद",
+  "tagline": "तुमचा आवाज, तुमचे शासन",
+  "nav": {
+    "home": "मुखपृष्ठ",
+    "raise_issue": "समस्या नोंदवा",
+    "my_issues": "माझ्या समस्या",
+    "dashboard": "डॅशबोर्ड",
+    "profile": "प्रोफाइल",
+    "notifications": "सूचना",
+    "logout": "बाहेर पडा"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "नोंदणी",
+    "mobile": "मोबाईल नंबर",
+    "otp": "OTP",
+    "send_otp": "OTP पाठवा",
+    "verify_otp": "OTP तपासा",
+    "full_name": "पूर्ण नाव",
+    "pin_code": "पिन कोड",
+    "address": "पत्ता"
+  },
+  "complaint": {
+    "title": "शीर्षक",
+    "description": "वर्णन",
+    "category": "श्रेणी",
+    "submit": "तक्रार नोंदवा",
+    "status": "स्थिती",
+    "submitted": "नोंदणीकृत",
+    "under_review": "पुनरावलोकनाधीन",
+    "assigned": "नियुक्त",
+    "in_progress": "प्रगतीपथावर",
+    "escalated": "वरिष्ठांकडे",
+    "resolved": "निराकरण झाले",
+    "closed": "बंद",
+    "reopened": "पुन्हा उघडले",
+    "sla_deadline": "अपेक्षित निराकरण",
+    "rate": "निराकरण रेट करा",
+    "track": "तक्रार ट्रॅक करा"
+  },
+  "dashboard": {
+    "total": "एकूण तक्रारी",
+    "pending": "प्रलंबित",
+    "resolved": "निराकरण झाले",
+    "satisfaction": "समाधान स्कोअर",
+    "sla": "SLA पालन",
+    "trend": "कल",
+    "by_category": "श्रेणीनुसार",
+    "heatmap": "समस्या नकाशा"
+  },
+  "area": {
+    "your_area": "तुमचे क्षेत्र",
+    "ward": "वार्ड",
+    "corporator": "नगरसेवक",
+    "mla": "आमदार",
+    "mp": "खासदार",
+    "confirm": "स्थानाची पुष्टी करा"
+  }
+}

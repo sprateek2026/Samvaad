@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+firebase-admin
+pydantic
+python-dotenv
+aiofiles
+ollama
+httpx

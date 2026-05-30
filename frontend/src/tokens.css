@@ -1,0 +1,52 @@
+:root {
+  /* ── Primary: Indigo / Royal Blue ── */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+
+  /* ── Secondary: Saffron (Maharashtra bhagwa) ── */
+  --color-saffron-400: #fb923c;
+  --color-saffron-500: #f97316;
+  --color-saffron-600: #ea580c;
+
+  /* ── Secondary: Emerald (resolved / success) ── */
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+
+  /* ── Accent: Gold ── */
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+
+  /* ── Status semantic colours ── */
+  --status-submitted:    #f59e0b;
+  --status-under-review: #3b82f6;
+  --status-assigned:     #8b5cf6;
+  --status-in-progress:  #f97316;
+  --status-escalated:    #ef4444;
+  --status-resolved:     #10b981;
+  --status-closed:       #6b7280;
+  --status-reopened:     #ec4899;
+
+  /* ── Surfaces ── */
+  --surface-page:  #f4f6fb;
+  --surface-card:  #ffffff;
+  --surface-hover: #f8faff;
+
+  /* ── Shadows ── */
+  --shadow-card:        0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-raised:      0 4px 16px rgba(99,102,241,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-modal:       0 25px 50px rgba(0,0,0,0.18);
+  --shadow-indigo-glow: 0 8px 25px rgba(99,102,241,0.22);
+
+  /* ── Navigation ── */
+  --nav-height: 3.5rem;
+
+  /* ── Animation durations ── */
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+}

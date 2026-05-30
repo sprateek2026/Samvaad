@@ -1,0 +1,60 @@
+{
+  "app_name": "संवाद",
+  "tagline": "आपकी आवाज़, आपकी सरकार",
+  "nav": {
+    "home": "होम",
+    "raise_issue": "शिकायत दर्ज करें",
+    "my_issues": "मेरी शिकायतें",
+    "dashboard": "डैशबोर्ड",
+    "profile": "प्रोफ़ाइल",
+    "notifications": "सूचनाएं",
+    "logout": "लॉग आउट"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "पंजीकरण",
+    "mobile": "मोबाइल नंबर",
+    "otp": "OTP",
+    "send_otp": "OTP भेजें",
+    "verify_otp": "OTP सत्यापित करें",
+    "full_name": "पूरा नाम",
+    "pin_code": "पिन कोड",
+    "address": "पता"
+  },
+  "complaint": {
+    "title": "शीर्षक",
+    "description": "विवरण",
+    "category": "श्रेणी",
+    "submit": "शिकायत दर्ज करें",
+    "status": "स्थिति",
+    "submitted": "दर्ज की गई",
+    "under_review": "समीक्षाधीन",
+    "assigned": "आवंटित",
+    "in_progress": "प्रगति पर",
+    "escalated": "वरिष्ठ को भेजा",
+    "resolved": "हल हो गई",
+    "closed": "बंद",
+    "reopened": "पुनः खोली गई",
+    "sla_deadline": "अपेक्षित समाधान",
+    "rate": "समाधान को रेट करें",
+    "track": "शिकायत ट्रैक करें"
+  },
+  "dashboard": {
+    "total": "कुल शिकायतें",
+    "pending": "लंबित",
+    "resolved": "हल हो गईं",
+    "satisfaction": "संतुष्टि स्कोर",
+    "sla": "SLA अनुपालन",
+    "trend": "रुझान",
+    "by_category": "श्रेणी के अनुसार",
+    "heatmap": "समस्या मानचित्र"
+  },
+  "area": {
+    "your_area": "आपका क्षेत्र",
+    "ward": "वार्ड",
+    "corporator": "पार्षद",
+    "mla": "विधायक",
+    "mp": "सांसद",
+    "confirm": "स्थान की पुष्टि करें"
+  }
+}

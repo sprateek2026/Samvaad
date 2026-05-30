@@ -1,0 +1,60 @@
+{
+  "app_name": "Samvaad",
+  "tagline": "Your Voice, Your Governance",
+  "nav": {
+    "home": "Home",
+    "raise_issue": "Raise Issue",
+    "my_issues": "My Issues",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "mobile": "Mobile Number",
+    "otp": "OTP",
+    "send_otp": "Send OTP",
+    "verify_otp": "Verify OTP",
+    "full_name": "Full Name",
+    "pin_code": "PIN Code",
+    "address": "Address"
+  },
+  "complaint": {
+    "title": "Title",
+    "description": "Description",
+    "category": "Category",
+    "submit": "Submit Complaint",
+    "status": "Status",
+    "submitted": "Submitted",
+    "under_review": "Under Review",
+    "assigned": "Assigned",
+    "in_progress": "In Progress",
+    "escalated": "Escalated",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "reopened": "Reopened",
+    "sla_deadline": "Expected Resolution",
+    "rate": "Rate Resolution",
+    "track": "Track Complaint"
+  },
+  "dashboard": {
+    "total": "Total Complaints",
+    "pending": "Pending",
+    "resolved": "Resolved",
+    "satisfaction": "Satisfaction Score",
+    "sla": "SLA Compliance",
+    "trend": "Trend",
+    "by_category": "By Category",
+    "heatmap": "Issue Heatmap"
+  },
+  "area": {
+    "your_area": "Your Area",
+    "ward": "Ward",
+    "corporator": "Corporator",
+    "mla": "MLA",
+    "mp": "MP",
+    "confirm": "Confirm Location"
+  }
+}

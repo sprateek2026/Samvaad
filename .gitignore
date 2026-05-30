@@ -1,0 +1,51 @@
+# ── Python ─────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# ── Runtime data (not source) ──────────────────
+backend/data/
+backend/uploads/
+data/
+uploads/
+
+# ── Secrets & credentials ──────────────────────
+.env
+.env.*
+!.env.example
+firebase-credentials.json
+*.pem
+*.key
+
+# ── Node / Vite ────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# ── IDE / tool config ──────────────────────────
+.claude/
+
+# ── Generated screenshots (keep login_samvaad.png reference) ──
+frontend/full-page.png
+frontend/login-page.png
+frontend/login-page-full.png
+frontend/login-card-header.png
+frontend/login-updated.png
+frontend/navbar-header.png
+screenshots/
+
+# ── OS ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ───────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
