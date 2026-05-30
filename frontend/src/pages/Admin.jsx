@@ -6,6 +6,7 @@ import RepresentativeAvatar from "../components/RepresentativeAvatar";
 import SimpleDrawer from "../components/SimpleDrawer";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MAP_STYLE } from "../mapStyle";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { FileText, Clock, CheckCircle2, AlertTriangle, Timer, TrendingUp } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
@@ -70,7 +71,7 @@ function DashboardTab() {
     if (!map.current && mapContainer.current && data) {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: `https://api.maptiler.com/maps/streets/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`,
+        style: MAP_STYLE,
         center: [73.8567, 18.5204],
         zoom: 11
       });

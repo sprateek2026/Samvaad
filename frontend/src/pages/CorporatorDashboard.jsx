@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { dashboardAPI } from "../api";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MAP_STYLE } from "../mapStyle";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { FileText, Clock, CheckCircle2, Star, Shield, MessageSquare } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
@@ -30,7 +31,7 @@ export default function CorporatorDashboard({ user }) {
     if (!map.current && mapContainer.current && stats) {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: `https://api.maptiler.com/maps/streets/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`,
+        style: MAP_STYLE,
         center: [73.8567, 18.5204],
         zoom: 12
       });

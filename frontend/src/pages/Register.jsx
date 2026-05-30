@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { authAPI, gisAPI } from "../api";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MAP_STYLE } from "../mapStyle";
 
 export default function Register({ onLogin }) {
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ export default function Register({ onLogin }) {
     if (map.current || !mapContainer.current) return;
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/streets/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`,
+      style: MAP_STYLE,
       center: [73.8567, 18.5204],
       zoom: 11
     });
