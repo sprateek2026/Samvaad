@@ -44,9 +44,43 @@ app.include_router(categories.router, prefix="/api/categories", tags=["Categorie
 app.include_router(suggestions.router, prefix="/api/suggestions", tags=["Suggestions"])
 
 
+def _auto_seed_if_empty():
+    """On a fresh database (e.g. a new Railway disk), populate ward, PIN,
+    representative and category data so GIS lookups work — no manual shell
+    commands needed. Idempotent: skips when wards already exist. Never raises,
+    so a seeding problem can't stop the API from starting."""
+    try:
+        from .database import get_connection
+        conn = get_connection()
+        try:
+            row = conn.execute("SELECT COUNT(*) FROM wards").fetchone()
+            ward_count = row[0] if row else 0
+        finally:
+            conn.close()
+        if ward_count > 0:
+            return
+
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        seed_path = os.path.join(repo_root, "tools", "seed_database.py")
+        if not os.path.exists(seed_path):
+            print(f"[seed] script not found at {seed_path}; skipping auto-seed")
+            return
+
+        print("[seed] wards table empty — running auto-seed...")
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("seed_database", seed_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.main()
+        print("[seed] auto-seed complete")
+    except BaseException as e:  # includes SystemExit from the seed script
+        print(f"[seed] auto-seed skipped due to error: {e}")
+
+
 @app.on_event("startup")
 def startup():
     init_db()
+    _auto_seed_if_empty()
 
 
 @app.get("/health")
