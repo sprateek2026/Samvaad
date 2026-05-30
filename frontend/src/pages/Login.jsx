@@ -115,19 +115,34 @@ export default function Login({ onLogin }) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               {t("auth.login_as")} <span className="text-red-500">*</span>
             </label>
-            <div className="flex rounded-xl border border-gray-200 p-1 bg-gray-50 gap-1">
-              {["citizen","corporator","admin"].map(role => (
-                <button key={role} type="button"
-                  onClick={() => { setSelectedRole(role); setError(""); }}
-                  className={`flex-1 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
-                    selectedRole === role
-                      ? "bg-saffron-500 text-white shadow-sm"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}>
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-              ))}
+            <div className={`flex rounded-xl border p-1 bg-gray-50 gap-1 transition-all ${
+              !selectedRole ? "border-saffron-400 ring-2 ring-saffron-300/40" : "border-gray-200"
+            }`}>
+              {["citizen","corporator","admin"].map(role => {
+                const locked = step === "otp";
+                const isSelected = selectedRole === role;
+                return (
+                  <button key={role} type="button"
+                    onClick={() => { if (locked) return; setSelectedRole(role); setError(""); }}
+                    disabled={locked && !isSelected}
+                    className={`flex-1 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                      isSelected
+                        ? "bg-saffron-500 text-white shadow-sm"
+                        : locked
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-gray-100"
+                    }`}>
+                    {locked && isSelected && <span className="mr-1">🔒</span>}
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                  </button>
+                );
+              })}
             </div>
+            {!selectedRole && (
+              <p className="text-xs text-saffron-600 mt-1.5 font-medium">
+                ↑ Choose your role to continue
+              </p>
+            )}
           </div>
 
           {selectedRole === "admin" && (
