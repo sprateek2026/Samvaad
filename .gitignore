@@ -8,11 +8,12 @@ env/
 *.egg-info/
 .pytest_cache/
 
-# ── Runtime data (not source) ──────────────────
-backend/data/
+# ── Runtime data (ignore the SQLite DB, keep source GeoJSON) ──
+backend/data/*
+!backend/data/*.geojson
 backend/uploads/
-data/
-uploads/
+/data/
+/uploads/
 
 # ── Secrets & credentials ──────────────────────
 .env
