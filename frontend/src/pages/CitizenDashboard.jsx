@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { dashboardAPI, complaintAPI } from "../api";
+import { dashboardAPI, complaintAPI, authAPI, gisAPI } from "../api";
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import {
   FileText, Clock, CheckCircle2, Star, FilePlus2,
-  Search, MapPin, ArrowRight, TrendingUp,
+  Search, MapPin, ArrowRight, TrendingUp, Pencil,
 } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
 import StatusBadge from "../components/ui/StatusBadge";
 import RepresentativeCard from "../components/ui/RepresentativeCard";
+import SimpleDrawer from "../components/SimpleDrawer";
 
 const STATUS_PIE_COLORS = {
   submitted:    "#f59e0b",
@@ -41,12 +42,49 @@ function SkeletonCard() {
   );
 }
 
-export default function CitizenDashboard({ user }) {
+export default function CitizenDashboard({ user, onUserUpdate }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [wardDrawer, setWardDrawer] = useState(false);
+  const [wardPin, setWardPin] = useState(user?.pin_code || "");
+  const [wardOptions, setWardOptions] = useState([]);
+  const [selectedWardId, setSelectedWardId] = useState(user?.ward?.id || null);
+  const [wardSearching, setWardSearching] = useState(false);
+  const [wardSaving, setWardSaving] = useState(false);
+  const [wardError, setWardError] = useState("");
+
+  async function findWards() {
+    if (!/^\d{6}$/.test(wardPin)) { setWardError("Enter a valid 6-digit PIN code"); return; }
+    setWardSearching(true); setWardError(""); setWardOptions([]);
+    try {
+      const res = await gisAPI.pincodeLookup({ pin_code: wardPin });
+      const wards = res.data?.wards || [];
+      if (wards.length === 0) {
+        const all = await gisAPI.wards();
+        setWardOptions(all.data?.wards || []);
+        setWardError("No wards found for this PIN — showing all wards below.");
+      } else {
+        setWardOptions(wards);
+      }
+    } catch { setWardError("Could not fetch wards. Try again."); }
+    finally { setWardSearching(false); }
+  }
+
+  async function saveWard() {
+    if (!selectedWardId) { setWardError("Select a ward first."); return; }
+    setWardSaving(true); setWardError("");
+    try {
+      const res = await authAPI.updateProfile({ ward_id: selectedWardId, pin_code: wardPin });
+      const token = localStorage.getItem("auth_token");
+      onUserUpdate?.({ ...res.data, token });
+      setWardDrawer(false);
+    } catch { setWardError("Failed to save. Please try again."); }
+    finally { setWardSaving(false); }
+  }
 
   useEffect(() => { if (user) { fetchStats(); fetchComplaints(); } }, [user]);
 
@@ -94,12 +132,19 @@ export default function CitizenDashboard({ user }) {
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">
               {greeting(user?.full_name)}
             </h1>
-            {user?.ward && (
-              <div className="flex items-center gap-1.5 text-primary-200 text-sm">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>Ward {user.ward.ward_number} — {user.ward.ward_name}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-primary-200 text-sm">
+              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                {user?.ward
+                  ? `Ward ${user.ward.ward_number} — ${user.ward.ward_name}`
+                  : "Ward not set"}
+              </span>
+              <button
+                onClick={() => { setWardPin(user?.pin_code || ""); setWardOptions([]); setWardError(""); setSelectedWardId(user?.ward?.id || null); setWardDrawer(true); }}
+                className="flex items-center gap-1 text-[11px] text-primary-300 hover:text-white transition-colors ml-0.5">
+                <Pencil className="w-3 h-3" /> Change
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2.5">
             <button onClick={() => navigate("/raise")}
@@ -270,6 +315,58 @@ export default function CitizenDashboard({ user }) {
           </div>
         )}
       </div>
+
+      {/* ── Change Ward Drawer ── */}
+      <SimpleDrawer isOpen={wardDrawer} onClose={() => setWardDrawer(false)} title="Correct Your Ward">
+        <p className="text-sm text-gray-500 mb-4">
+          Enter your PIN code to find the correct ward, then select it below.
+        </p>
+
+        <label className="block text-xs font-semibold text-gray-700 mb-1">PIN Code</label>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text" value={wardPin} maxLength={6}
+            onChange={e => setWardPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            placeholder="e.g. 411058"
+            className="ds-input flex-1" />
+          <button onClick={findWards} disabled={wardSearching}
+            className="btn-saffron px-4 py-2 text-sm whitespace-nowrap disabled:opacity-50">
+            {wardSearching ? "Searching…" : "Find Wards"}
+          </button>
+        </div>
+
+        {wardError && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">{wardError}</p>
+        )}
+
+        {wardOptions.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-gray-700 mb-2">Select Your Ward</label>
+            <div className="space-y-2 max-h-52 overflow-y-auto scrollbar-thin pr-1">
+              {wardOptions.map(w => (
+                <label key={w.id || w.ward_number}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${
+                    selectedWardId === (w.id || w.ward_number)
+                      ? "border-primary-400 bg-primary-50 ring-2 ring-primary-300/30"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}>
+                  <input type="radio" name="ward" className="accent-primary-600"
+                    checked={selectedWardId === (w.id || w.ward_number)}
+                    onChange={() => setSelectedWardId(w.id || w.ward_number)} />
+                  <span className="text-sm font-medium text-gray-800">
+                    Ward {w.ward_number} — {w.ward_name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button onClick={saveWard} disabled={wardSaving || !selectedWardId || wardOptions.length === 0}
+          className="w-full btn-primary py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+          {wardSaving ? "Saving…" : "Save Ward"}
+        </button>
+      </SimpleDrawer>
     </div>
   );
 }

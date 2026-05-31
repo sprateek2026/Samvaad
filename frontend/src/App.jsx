@@ -116,7 +116,7 @@ export default function App() {
               user ? (
                 user.role === "corporator" ? <CorporatorDashboard user={user} /> :
                 user.role === "admin"      ? <AdminPage user={user} /> :
-                                             <CitizenDashboard user={user} />
+                                             <CitizenDashboard user={user} onUserUpdate={saveUser} />
               ) : <Login onLogin={handleLogin} />
             } />
             <Route path="/login"       element={<Login onLogin={handleLogin} />} />

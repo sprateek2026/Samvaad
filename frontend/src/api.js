@@ -40,6 +40,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post("/auth/register", data),
   profile: (signal) => api.get("/auth/profile", { signal }),
+  updateProfile: (data) => api.patch("/auth/profile", data),
 };
 
 export const categoryAPI = {
