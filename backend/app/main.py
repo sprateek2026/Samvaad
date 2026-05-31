@@ -96,10 +96,15 @@ def _auto_seed_if_empty():
 
 
 def _apply_pincode_corrections():
-    """Apply known pincode→ward fixes that may be absent from the initial seed.
-    Uses INSERT OR IGNORE so it is fully idempotent — safe to run on every startup."""
-    corrections = [
-        ("411058", 32),   # Warje Malwadi was missing from pincode 411058 seed data
+    """Apply known pincode→ward fixes. Idempotent — safe to run on every startup."""
+    # (pin_code, ward_number) rows that must exist
+    must_have = [
+        ("411058", 32),   # Warje-Malwadi: only ward for this PIN per PMC 2025/26
+    ]
+    # (pin_code, ward_number) rows that must NOT exist (wrong mappings to purge)
+    must_remove = [
+        ("411058", 34),   # Warje-Kondhave Dhavde — not part of PIN 411058
+        ("411058", 35),   # not part of PIN 411058
     ]
     try:
         from .database import get_connection
@@ -117,7 +122,18 @@ def _apply_pincode_corrections():
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_pincode_ward_unique
                 ON pincode_ward_mapping(pin_code, ward_id)
             """)
-            for pin, ward_num in corrections:
+            # Purge wrong mappings
+            for pin, ward_num in must_remove:
+                ward = conn.execute(
+                    "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
+                ).fetchone()
+                if ward:
+                    conn.execute(
+                        "DELETE FROM pincode_ward_mapping WHERE pin_code = ? AND ward_id = ?",
+                        (pin, ward["id"])
+                    )
+            # Ensure correct mappings exist
+            for pin, ward_num in must_have:
                 ward = conn.execute(
                     "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
                 ).fetchone()
