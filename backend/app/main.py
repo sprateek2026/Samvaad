@@ -95,10 +95,38 @@ def _auto_seed_if_empty():
         print(f"[seed] auto-seed skipped due to error: {e}")
 
 
+def _apply_pincode_corrections():
+    """Apply known pincode→ward fixes that may be absent from the initial seed.
+    Uses INSERT OR IGNORE so it is fully idempotent — safe to run on every startup."""
+    corrections = [
+        ("411058", 32),   # Warje Malwadi was missing from pincode 411058 seed data
+    ]
+    try:
+        from .database import get_connection
+        conn = get_connection()
+        try:
+            for pin, ward_num in corrections:
+                ward = conn.execute(
+                    "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
+                ).fetchone()
+                if ward:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pincode_ward_mapping (pin_code, ward_id) VALUES (?, ?)",
+                        (pin, ward["id"])
+                    )
+            conn.commit()
+            print("[seed] pincode corrections applied")
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"[seed] pincode corrections skipped: {e}")
+
+
 @app.on_event("startup")
 def startup():
     init_db()
     _auto_seed_if_empty()
+    _apply_pincode_corrections()
 
 
 @app.get("/health")
