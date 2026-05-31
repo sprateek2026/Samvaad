@@ -14,8 +14,8 @@ export default function Register({ onLogin }) {
   const mobile = token.replace("dev-user-", "");
   const [areaInfo, setAreaInfo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [localities, setLocalities] = useState([]);
-  const [selectedLocality, setSelectedLocality] = useState("");
+  const [wardsByPin, setWardsByPin] = useState([]);
+  const [selectedWardByPin, setSelectedWardByPin] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceTimer = useRef(null);
@@ -25,12 +25,13 @@ export default function Register({ onLogin }) {
 
   useEffect(() => {
     if (form.pin_code.length === 6) {
-      gisAPI.localities(form.pin_code).then(res => {
-        setLocalities(res.data.localities || []);
-        setSelectedLocality("");
-      }).catch(() => setLocalities([]));
+      gisAPI.pincodeLookup({ pin_code: form.pin_code }).then(res => {
+        setWardsByPin(res.data.wards || []);
+        setSelectedWardByPin("");
+      }).catch(() => setWardsByPin([]));
     } else {
-      setLocalities([]);
+      setWardsByPin([]);
+      setSelectedWardByPin("");
     }
   }, [form.pin_code]);
 
@@ -93,22 +94,18 @@ export default function Register({ onLogin }) {
     } catch {}
   }
 
-  function handleLocalityChange(localityId) {
-    if (!localityId) {
-      setSelectedLocality("");
-      setForm(f => ({ ...f, address: "", ward_id: null }));
+  function handleWardByPinChange(wardId) {
+    if (!wardId) {
+      setSelectedWardByPin("");
+      setForm(f => ({ ...f, ward_id: null }));
       setAreaInfo(null);
       return;
     }
-    const loc = localities.find(l => l.id === parseInt(localityId));
-    if (loc) {
-      setSelectedLocality(localityId);
-      setForm(f => ({ ...f, address: loc.name, ward_id: loc.ward_id, latitude: null, longitude: null }));
-      setAreaInfo({
-        id: loc.ward_id,
-        ward_number: loc.ward_number,
-        ward_name: loc.ward_name
-      });
+    const ward = wardsByPin.find(w => String(w.id) === wardId);
+    if (ward) {
+      setSelectedWardByPin(wardId);
+      setForm(f => ({ ...f, ward_id: ward.id, latitude: null, longitude: null }));
+      setAreaInfo({ id: ward.id, ward_number: ward.ward_number, ward_name: ward.ward_name });
     }
   }
 
@@ -204,16 +201,19 @@ export default function Register({ onLogin }) {
         <input type="text" value={form.pin_code} onChange={(e) => setForm({ ...form, pin_code: e.target.value })} placeholder="411038" maxLength={6} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-1 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
         <p className="text-[11px] text-amber-600 mb-3">GPS may auto-fill this — verify it matches your actual PIN code.</p>
 
-        {localities.length > 0 && (
+        {wardsByPin.length > 0 && (
           <>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("auth.select_locality")}</label>
-            <select value={selectedLocality} onChange={(e) => handleLocalityChange(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition">
-              <option value="">{t("auth.choose_locality")}</option>
-              {localities.map(l => (
-                <option key={l.id} value={l.id}>{l.name} — Ward {l.ward_number} ({l.ward_name})</option>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Your Ward</label>
+            <select value={selectedWardByPin} onChange={(e) => handleWardByPinChange(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition">
+              <option value="">— Choose your ward —</option>
+              {wardsByPin.map(w => (
+                <option key={w.id} value={w.id}>Ward {w.ward_number} — {w.ward_name}</option>
               ))}
             </select>
           </>
+        )}
+        {form.pin_code.length === 6 && wardsByPin.length === 0 && (
+          <p className="text-xs text-amber-600 mb-4">No wards found for this PIN code. Use the map below to set your location.</p>
         )}
 
         <label className="block text-sm font-medium text-gray-700 mb-1">{t("auth.address")}</label>
