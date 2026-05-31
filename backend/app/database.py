@@ -173,7 +173,8 @@ def init_db():
             pin_code TEXT NOT NULL,
             ward_id INTEGER NOT NULL,
             locality TEXT,
-            FOREIGN KEY (ward_id) REFERENCES wards(id)
+            FOREIGN KEY (ward_id) REFERENCES wards(id),
+            UNIQUE(pin_code, ward_id)
         );
         CREATE INDEX IF NOT EXISTS idx_pincode ON pincode_ward_mapping(pin_code);
 

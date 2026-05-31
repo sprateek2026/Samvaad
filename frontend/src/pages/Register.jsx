@@ -26,7 +26,12 @@ export default function Register({ onLogin }) {
   useEffect(() => {
     if (form.pin_code.length === 6) {
       gisAPI.pincodeLookup({ pin_code: form.pin_code }).then(res => {
-        setWardsByPin(res.data.wards || []);
+        const seen = new Set();
+        const unique = (res.data.wards || []).filter(w => {
+          if (seen.has(w.ward_number)) return false;
+          seen.add(w.ward_number); return true;
+        });
+        setWardsByPin(unique);
         setSelectedWardByPin("");
       }).catch(() => setWardsByPin([]));
     } else {

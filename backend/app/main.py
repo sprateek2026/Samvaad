@@ -105,6 +105,18 @@ def _apply_pincode_corrections():
         from .database import get_connection
         conn = get_connection()
         try:
+            # Remove duplicate (pin_code, ward_id) rows keeping the lowest id
+            conn.execute("""
+                DELETE FROM pincode_ward_mapping
+                WHERE id NOT IN (
+                    SELECT MIN(id) FROM pincode_ward_mapping GROUP BY pin_code, ward_id
+                )
+            """)
+            # Ensure unique index exists so future inserts stay clean
+            conn.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_pincode_ward_unique
+                ON pincode_ward_mapping(pin_code, ward_id)
+            """)
             for pin, ward_num in corrections:
                 ward = conn.execute(
                     "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
