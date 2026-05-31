@@ -136,7 +136,7 @@ export default function Register({ onLogin }) {
   function selectSuggestion(s) {
     setForm(f => ({ ...f, address: s.full, latitude: s.lat, longitude: s.lng, ward_id: null }));
     setShowSuggestions(false);
-    setSelectedLocality("");
+    setSelectedWardByPin("");
     gisAPI.locate({ latitude: s.lat, longitude: s.lng }).then(res => {
       setAreaInfo(res.data);
       setForm(f => ({ ...f, ward_id: res.data.id }));
@@ -159,7 +159,9 @@ export default function Register({ onLogin }) {
       onLogin({ ...profile.data, token });
       navigate("/");
     } catch (err) {
-      alert(t("auth.registration_error") + (err.response?.data?.detail || err.message));
+      const detail = err.response?.data?.detail || err.message;
+      const url = err.config?.url || import.meta.env.VITE_API_URL || "unknown";
+      alert(`${t("auth.registration_error")}${detail}\n\n(API: ${url})`);
     }
     setLoading(false);
   }
