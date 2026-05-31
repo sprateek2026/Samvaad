@@ -297,9 +297,33 @@ def rate_complaint(
         (token_data["uid"],)
     ).fetchone()
 
+    complaint = db.execute(
+        "SELECT id, status, assigned_to FROM complaints WHERE complaint_id = ? AND citizen_id = ?",
+        (complaint_id, user["id"])
+    ).fetchone()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+
     db.execute(
         "UPDATE complaints SET citizen_rating = ? WHERE complaint_id = ? AND citizen_id = ?",
         (req.rating, complaint_id, user["id"])
     )
+
+    if req.rating <= 2 and complaint["status"] == "resolved":
+        db.execute(
+            "UPDATE complaints SET status = 'reopened', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (complaint["id"],)
+        )
+        db.execute(
+            "INSERT INTO complaint_status_log (complaint_id, from_status, to_status, changed_by, remarks) VALUES (?, ?, ?, ?, ?)",
+            (complaint["id"], "resolved", "reopened", user["id"], "Citizen rated resolution unsatisfactory")
+        )
+        if complaint["assigned_to"]:
+            create_notification(
+                db, complaint["assigned_to"], complaint["id"], "complaint_reopened",
+                "Complaint Reopened",
+                f"Complaint {complaint_id} was reopened — citizen was not satisfied with the resolution."
+            )
+
     db.commit()
-    return {"message": "Rating submitted"}
+    return {"message": "Rating submitted", "reopened": req.rating <= 2 and complaint["status"] == "resolved"}

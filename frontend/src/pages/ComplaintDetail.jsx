@@ -13,9 +13,21 @@ import {
 const PRIORITY_COLOR = { low: "text-gray-500", medium: "text-amber-600", high: "text-red-600", urgent: "text-red-700" };
 const STATUS_UPDATE_COLORS = {
   under_review: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+  assigned:     "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100",
   in_progress:  "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
+  escalated:    "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
   resolved:     "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+  closed:       "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200",
 };
+const STATUS_ORDER_VAL = {
+  submitted: 0, under_review: 1, assigned: 2, in_progress: 3,
+  escalated: 4, resolved: 5, closed: 6, reopened: 1,
+};
+const NEXT_STATUS = {
+  submitted: "under_review", under_review: "assigned", assigned: "in_progress",
+  in_progress: "resolved", resolved: "closed", reopened: "under_review",
+};
+const ALL_CORP_STATUSES = ["under_review","assigned","in_progress","escalated","resolved","closed"];
 
 export default function ComplaintDetail({ user }) {
   const { t } = useTranslation();
@@ -26,6 +38,7 @@ export default function ComplaintDetail({ user }) {
   const [lightbox, setLightbox] = useState(null);
   const [rating, setRating] = useState(0);
   const [ratingHover, setRatingHover] = useState(0);
+  const [pendingRating, setPendingRating] = useState(0);
 
   useEffect(() => { if (id) fetchComplaint(); }, [id]);
 
@@ -43,7 +56,13 @@ export default function ComplaintDetail({ user }) {
   }
 
   async function handleRate(r) {
-    try { await complaintAPI.rate(id, r); setRating(r); } catch {}
+    if (r <= 2 && pendingRating !== r) { setPendingRating(r); return; }
+    setPendingRating(0);
+    try {
+      const res = await complaintAPI.rate(id, r);
+      setRating(r);
+      if (res.data?.reopened) fetchComplaint();
+    } catch {}
   }
 
   const isPastDue = complaint?.sla_deadline && new Date(complaint.sla_deadline) < new Date() && complaint.status !== "resolved";
@@ -118,6 +137,7 @@ export default function ComplaintDetail({ user }) {
           status={complaint.status}
           statusLog={complaint.status_log || []}
           createdAt={complaint.created_at}
+          slaDeadline={complaint.sla_deadline}
         />
       </div>
 
@@ -181,17 +201,31 @@ export default function ComplaintDetail({ user }) {
       {/* Corporator: Status update */}
       {(user?.role === "corporator" || user?.role === "admin") && (
         <div className="ds-card p-5 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">{t("complaint.update_status")}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">{t("complaint.update_status")}</h3>
+          <p className="text-xs text-gray-400 mb-3">
+            Current: <span className="font-semibold text-gray-600 capitalize">{complaint.status.replace(/_/g," ")}</span>
+            {NEXT_STATUS[complaint.status] && (
+              <span> · Suggested next: <span className="font-semibold text-primary-600 capitalize">{NEXT_STATUS[complaint.status].replace(/_/g," ")} →</span></span>
+            )}
+          </p>
           <textarea value={remarks} onChange={e => setRemarks(e.target.value)}
             placeholder="Add remarks or notes..."
             className="ds-input mb-3 resize-none" rows={2} />
           <div className="flex flex-wrap gap-2">
-            {["under_review","in_progress","resolved"].map(s => (
-              <button key={s} onClick={() => handleStatusUpdate(s)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors capitalize ${STATUS_UPDATE_COLORS[s]}`}>
-                Mark as {s.replace(/_/g," ")}
-              </button>
-            ))}
+            {ALL_CORP_STATUSES
+              .filter(s => STATUS_ORDER_VAL[s] > STATUS_ORDER_VAL[complaint.status] || s === "escalated")
+              .map(s => {
+                const isSuggested = NEXT_STATUS[complaint.status] === s;
+                return (
+                  <button key={s} onClick={() => handleStatusUpdate(s)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all capitalize
+                      ${STATUS_UPDATE_COLORS[s]}
+                      ${isSuggested ? "ring-2 ring-offset-1 ring-primary-400 shadow-sm" : ""}
+                    `}>
+                    {isSuggested && "→ "}Mark as {s.replace(/_/g," ")}
+                  </button>
+                );
+              })}
           </div>
         </div>
       )}
@@ -203,7 +237,7 @@ export default function ComplaintDetail({ user }) {
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             <h3 className="text-sm font-semibold text-gray-700">{t("complaint.rate_resolution")}</h3>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 mb-2">
             {[1,2,3,4,5].map(n => (
               <button key={n}
                 onClick={() => handleRate(n)}
@@ -211,14 +245,20 @@ export default function ComplaintDetail({ user }) {
                 onMouseLeave={() => setRatingHover(0)}
                 className="p-1 transition-transform hover:scale-110">
                 <Star className={`w-7 h-7 transition-colors ${
-                  n <= (ratingHover || rating)
+                  n <= (ratingHover || pendingRating || rating)
                     ? "fill-gold-400 text-gold-400"
                     : "text-gray-300"
                 }`} />
               </button>
             ))}
           </div>
-          {rating > 0 && <p className="text-xs text-gray-500 mt-2">You rated this {rating}/5</p>}
+          {pendingRating > 0 && pendingRating <= 2 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-xs text-amber-800 flex items-start gap-2">
+              <span>⚠️</span>
+              <span>Rating 1–2 stars will reopen this complaint for further review. Tap the star again to confirm.</span>
+            </div>
+          )}
+          {rating > 0 && !pendingRating && <p className="text-xs text-gray-500">You rated this {rating}/5</p>}
         </div>
       )}
 
