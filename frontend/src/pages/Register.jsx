@@ -147,8 +147,8 @@ export default function Register({ onLogin }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (localities.length > 0 && !form.ward_id && !form.latitude) {
-      alert("Select a locality or click on the map to set your location");
+    if (wardsByPin.length > 0 && !form.ward_id && !form.latitude) {
+      alert("Please select your ward or click on the map to set your location.");
       return;
     }
     setLoading(true);
