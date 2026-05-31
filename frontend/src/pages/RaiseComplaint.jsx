@@ -124,7 +124,7 @@ export default function RaiseComplaint({ user }) {
       setResult(res.data);
       setStep(4);
     } catch (err) {
-      alert("Error: " + (err.response?.data?.detail || err.message));
+      alert(t("common.error") + (err.response?.data?.detail || err.message));
     }
     setLoading(false);
   }
@@ -137,7 +137,7 @@ export default function RaiseComplaint({ user }) {
       setResult({ suggestion_id: res.data.suggestion_id, type: "suggestion" });
       setStep(4);
     } catch (err) {
-      alert("Error: " + (err.response?.data?.detail || err.message));
+      alert(t("common.error") + (err.response?.data?.detail || err.message));
     }
     setLoading(false);
   }
@@ -246,7 +246,7 @@ export default function RaiseComplaint({ user }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("complaint.title")}</label>
               <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required placeholder="e.g., Install more dustbins"
+                required placeholder={t("complaint.suggestion_title_placeholder")}
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
             </div>
             <div>
@@ -397,7 +397,7 @@ export default function RaiseComplaint({ user }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("complaint.title")}</label>
               <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required placeholder="e.g., Pothole near bus stop"
+                required placeholder={t("complaint.title_placeholder")}
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
             </div>
 
@@ -480,11 +480,11 @@ export default function RaiseComplaint({ user }) {
                     {location ? (
                       <p className="text-xs text-gray-400">{location.lat.toFixed(4)}, {location.lng.toFixed(4)}</p>
                     ) : (
-                      <p className="text-xs text-gray-400">GPS coordinates will be attached</p>
+                      <p className="text-xs text-gray-400">{t("complaint.gps_attached")}</p>
                     )}
                   </div>
                   {location && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">GPS found</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">{t("complaint.gps_found")}</span>
                   )}
                 </div>
                 <button type="button" onClick={detectLocation}
@@ -498,7 +498,7 @@ export default function RaiseComplaint({ user }) {
             {/* SLA preview */}
             <div className="flex items-center gap-2 text-xs text-gray-500 px-1">
               <Clock size={13} className="text-amber-500 flex-shrink-0" />
-              Expected resolution: within <strong className="text-gray-700 ml-0.5">{getSLADays()} days</strong>
+              <span>{t("complaint.expected_within", { days: getSLADays() })}</span>
             </div>
 
             <div className="flex justify-end pt-2">
@@ -548,7 +548,7 @@ export default function RaiseComplaint({ user }) {
                 {/* AI classification card */}
                 {result.ai_classification && (
                   <div className="ds-card p-4 mb-4 text-left">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AI Classification</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t("complaint.ai_classification")}</p>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-semibold text-purple-700">{result.ai_classification.category}</span>
                       <span className="text-sm font-bold text-gray-700">{Math.round(result.ai_classification.confidence * 100)}%</span>
@@ -557,7 +557,7 @@ export default function RaiseComplaint({ user }) {
                       <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-700"
                         style={{ width: `${Math.round(result.ai_classification.confidence * 100)}%` }} />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1.5">Confidence score</p>
+                    <p className="text-xs text-gray-400 mt-1.5">{t("complaint.confidence_score")}</p>
                   </div>
                 )}
 

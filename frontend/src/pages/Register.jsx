@@ -148,7 +148,7 @@ export default function Register({ onLogin }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (wardsByPin.length > 0 && !form.ward_id && !form.latitude) {
-      alert("Please select your ward or click on the map to set your location.");
+      alert(t("auth.select_ward_or_map"));
       return;
     }
     setLoading(true);
@@ -203,21 +203,21 @@ export default function Register({ onLogin }) {
 
         <label className="block text-sm font-medium text-gray-700 mb-1">{t("auth.pin_code")}</label>
         <input type="text" value={form.pin_code} onChange={(e) => setForm({ ...form, pin_code: e.target.value })} placeholder="411038" maxLength={6} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-1 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
-        <p className="text-[11px] text-amber-600 mb-3">GPS may auto-fill this — verify it matches your actual PIN code.</p>
+        <p className="text-[11px] text-amber-600 mb-3">{t("auth.pin_gps_hint")}</p>
 
         {wardsByPin.length > 0 && (
           <>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Your Ward</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t("area.select_your_ward")}</label>
             <select value={selectedWardByPin} onChange={(e) => handleWardByPinChange(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition">
-              <option value="">— Choose your ward —</option>
+              <option value="">{t("area.choose_ward")}</option>
               {wardsByPin.map(w => (
-                <option key={w.id} value={w.id}>Ward {w.ward_number} — {w.ward_name}</option>
+                <option key={w.id} value={w.id}>{t("area.ward_format", { number: w.ward_number, name: w.ward_name })}</option>
               ))}
             </select>
           </>
         )}
         {form.pin_code.length === 6 && wardsByPin.length === 0 && (
-          <p className="text-xs text-amber-600 mb-4">No wards found for this PIN code. Use the map below to set your location.</p>
+          <p className="text-xs text-amber-600 mb-4">{t("auth.no_wards_map")}</p>
         )}
 
         <label className="block text-sm font-medium text-gray-700 mb-1">{t("auth.address")}</label>

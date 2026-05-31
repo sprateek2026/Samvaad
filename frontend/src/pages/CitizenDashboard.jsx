@@ -26,10 +26,10 @@ const STATUS_PIE_COLORS = {
 
 const CATEGORY_COLORS = ["#6366f1","#f97316","#10b981","#f59e0b","#8b5cf6","#06b6d4","#ec4899","#14b8a6"];
 
-function greeting(name) {
+function greeting(name, t) {
   const h = new Date().getHours();
-  const prefix = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-  return `${prefix}, ${name?.split(" ")[0] || "Citizen"}`;
+  const prefix = h < 12 ? t("greeting.morning") : h < 17 ? t("greeting.afternoon") : t("greeting.evening");
+  return `${prefix}, ${name?.split(" ")[0] || t("greeting.fallback")}`;
 }
 
 function SkeletonCard() {
@@ -58,7 +58,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
   const [wardError, setWardError] = useState("");
 
   async function findWards() {
-    if (!/^\d{6}$/.test(wardPin)) { setWardError("Enter a valid 6-digit PIN code"); return; }
+    if (!/^\d{6}$/.test(wardPin)) { setWardError(t("area.enter_valid_pin")); return; }
     setWardSearching(true); setWardError(""); setWardOptions([]);
     try {
       const res = await gisAPI.pincodeLookup({ pin_code: wardPin });
@@ -66,23 +66,23 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       if (wards.length === 0) {
         const all = await gisAPI.wards();
         setWardOptions(all.data?.wards || []);
-        setWardError("No wards found for this PIN — showing all wards below.");
+        setWardError(t("area.no_wards_showing_all"));
       } else {
         setWardOptions(wards);
       }
-    } catch { setWardError("Could not fetch wards. Try again."); }
+    } catch { setWardError(t("area.could_not_fetch")); }
     finally { setWardSearching(false); }
   }
 
   async function saveWard() {
-    if (!selectedWardId) { setWardError("Select a ward first."); return; }
+    if (!selectedWardId) { setWardError(t("area.select_ward_first")); return; }
     setWardSaving(true); setWardError("");
     try {
       const res = await authAPI.updateProfile({ ward_id: selectedWardId, pin_code: wardPin });
       const token = localStorage.getItem("auth_token");
       onUserUpdate?.({ ...res.data, token });
       setWardDrawer(false);
-    } catch { setWardError("Failed to save. Please try again."); }
+    } catch { setWardError(t("area.save_failed")); }
     finally { setWardSaving(false); }
   }
 
@@ -130,19 +130,19 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
           <div>
             <p className="text-primary-200 text-sm font-medium mb-1">{today}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">
-              {greeting(user?.full_name)}
+              {greeting(user?.full_name, t)}
             </h1>
             <div className="flex items-center gap-2 text-primary-200 text-sm">
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
               <span>
                 {user?.ward
-                  ? `Ward ${user.ward.ward_number} — ${user.ward.ward_name}`
-                  : "Ward not set"}
+                  ? t("area.ward_format", { number: user.ward.ward_number, name: user.ward.ward_name })
+                  : t("area.ward_not_set")}
               </span>
               <button
                 onClick={() => { setWardPin(user?.pin_code || ""); setWardOptions([]); setWardError(""); setSelectedWardId(user?.ward?.id || null); setWardDrawer(true); }}
                 className="flex items-center gap-1 text-[11px] bg-white/15 hover:bg-white/25 text-white px-1.5 py-0.5 rounded transition-colors">
-                <Pencil className="w-3 h-3" /> Change
+                <Pencil className="w-3 h-3" /> {t("area.change")}
               </button>
             </div>
           </div>
@@ -151,12 +151,12 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
                          bg-saffron-500 hover:bg-saffron-600 text-white transition-all duration-150"
               style={{ boxShadow: "0 4px 14px rgba(249,115,22,0.4)" }}>
-              <FilePlus2 className="w-4 h-4" /> Raise Complaint
+              <FilePlus2 className="w-4 h-4" /> {t("dashboard.raise_complaint")}
             </button>
             <button onClick={() => navigate("/complaints")}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
                          bg-white/15 hover:bg-white/25 text-white border border-white/25 transition-all duration-150">
-              <Search className="w-4 h-4" /> My Issues
+              <Search className="w-4 h-4" /> {t("dashboard.my_issues")}
             </button>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       {(corporators.length > 0 || mla || mp) && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Your Representatives</h2>
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{t("area.your_representatives")}</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin snap-x">
             {corporators.map((c, i) => (
@@ -203,7 +203,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       <div className="grid lg:grid-cols-2 gap-5 mb-5">
         {/* Donut — Status overview */}
         <div className="ds-card p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Complaint Status Overview</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t("dashboard.status_overview")}</h3>
           {pieData.some(d => d.value > 0) ? (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -271,9 +271,9 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       {/* ── Recent Complaints ── */}
       <div className="ds-card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-700">Recent Complaints</h3>
+          <h3 className="text-sm font-semibold text-gray-700">{t("dashboard.recent_complaints")}</h3>
           <Link to="/complaints" className="flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700">
-            View all <ArrowRight className="w-3.5 h-3.5" />
+            {t("dashboard.view_all")} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -304,7 +304,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
                     <p className="text-sm font-medium text-gray-900 truncate group-hover:text-primary-700">{c.title}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       <span className="font-mono">#{c.complaint_id}</span>
-                      {" · "}{ageDays === 0 ? "Today" : `${ageDays}d ago`}
+                      {" · "}{ageDays === 0 ? t("common.today") : t("common.days_ago", { count: ageDays })}
                     </p>
                   </div>
                   <StatusBadge status={c.status} size="sm" />
@@ -317,12 +317,12 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       </div>
 
       {/* ── Change Ward Drawer ── */}
-      <SimpleDrawer isOpen={wardDrawer} onClose={() => setWardDrawer(false)} title="Correct Your Ward">
+      <SimpleDrawer isOpen={wardDrawer} onClose={() => setWardDrawer(false)} title={t("area.correct_ward")}>
         <p className="text-sm text-gray-500 mb-4">
-          Enter your PIN code to find the correct ward, then select it below.
+          {t("area.correct_ward_hint")}
         </p>
 
-        <label className="block text-xs font-semibold text-gray-700 mb-1">PIN Code</label>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">{t("auth.pin_code")}</label>
         <div className="flex gap-2 mb-4">
           <input
             type="text" value={wardPin} maxLength={6}
@@ -331,7 +331,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
             className="ds-input flex-1" />
           <button onClick={findWards} disabled={wardSearching}
             className="btn-saffron px-4 py-2 text-sm whitespace-nowrap disabled:opacity-50">
-            {wardSearching ? "Searching…" : "Find Wards"}
+            {wardSearching ? t("area.searching") : t("area.find_wards")}
           </button>
         </div>
 
@@ -341,7 +341,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
 
         {wardOptions.length > 0 && (
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-700 mb-2">Select Your Ward</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">{t("area.select_your_ward")}</label>
             <div className="space-y-2 max-h-52 overflow-y-auto scrollbar-thin pr-1">
               {wardOptions.map(w => (
                 <label key={w.id || w.ward_number}
@@ -354,7 +354,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
                     checked={selectedWardId === (w.id || w.ward_number)}
                     onChange={() => setSelectedWardId(w.id || w.ward_number)} />
                   <span className="text-sm font-medium text-gray-800">
-                    Ward {w.ward_number} — {w.ward_name}
+                    {t("area.ward_format", { number: w.ward_number, name: w.ward_name })}
                   </span>
                 </label>
               ))}
@@ -364,7 +364,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
 
         <button onClick={saveWard} disabled={wardSaving || !selectedWardId || wardOptions.length === 0}
           className="w-full btn-primary py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
-          {wardSaving ? "Saving…" : "Save Ward"}
+          {wardSaving ? t("auth.saving") : t("area.save_ward")}
         </button>
       </SimpleDrawer>
     </div>

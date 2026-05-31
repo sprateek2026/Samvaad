@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Phone, Info } from 'lucide-react';
 import RepresentativeAvatar from '../RepresentativeAvatar';
 
-const TYPE_LABEL = { corporator: 'Corporator', mla: 'MLA', mp: 'MP' };
 const TYPE_COLOR = {
   corporator: 'bg-primary-100 text-primary-700',
   mla:        'bg-saffron-100 text-saffron-700',
@@ -9,8 +9,9 @@ const TYPE_COLOR = {
 };
 
 export default function RepresentativeCard({ rep, type }) {
+  const { t } = useTranslation();
   if (!rep) return null;
-  const label = TYPE_LABEL[type] || type;
+  const label = TYPE_COLOR[type] ? t(`area.${type}`) : type;
   const colorClass = TYPE_COLOR[type] || 'bg-gray-100 text-gray-600';
   const name = rep.name || rep.mla_name || rep.mp_name || '—';
   const party = rep.party || rep.mla_party || rep.mp_party || '';
@@ -38,14 +39,14 @@ export default function RepresentativeCard({ rep, type }) {
             className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium
                        rounded-lg border border-gray-200 text-gray-600 hover:border-primary-300
                        hover:text-primary-600 hover:bg-primary-50 transition-colors">
-            <Phone className="w-3 h-3" /> Call
+            <Phone className="w-3 h-3" /> {t("area.call")}
           </a>
         )}
         <button
           className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium
                      rounded-lg border border-gray-200 text-gray-600 hover:border-primary-300
                      hover:text-primary-600 hover:bg-primary-50 transition-colors">
-          <Info className="w-3 h-3" /> Profile
+          <Info className="w-3 h-3" /> {t("area.profile")}
         </button>
       </div>
     </div>

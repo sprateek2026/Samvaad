@@ -1,26 +1,27 @@
+import { useTranslation } from "react-i18next";
 import {
   FileText, Search, UserCheck, Wrench,
   AlertTriangle, CheckCircle2, Archive, Circle,
 } from "lucide-react";
 
 const STEPS = [
-  { key: "submitted",    label: "Submitted" },
-  { key: "under_review", label: "Under Review" },
-  { key: "assigned",     label: "Assigned" },
-  { key: "in_progress",  label: "In Progress" },
-  { key: "escalated",    label: "Escalated" },
-  { key: "resolved",     label: "Resolved" },
-  { key: "closed",       label: "Closed" },
+  { key: "submitted" },
+  { key: "under_review" },
+  { key: "assigned" },
+  { key: "in_progress" },
+  { key: "escalated" },
+  { key: "resolved" },
+  { key: "closed" },
 ];
 
 const STEP_META = {
-  submitted:    { Icon: FileText,      desc: "Your complaint has been registered" },
-  under_review: { Icon: Search,        desc: "Municipal team is reviewing your complaint" },
-  assigned:     { Icon: UserCheck,     desc: "Assigned to a corporator" },
-  in_progress:  { Icon: Wrench,        desc: "Work is underway" },
-  escalated:    { Icon: AlertTriangle, desc: "Escalated for urgent attention" },
-  resolved:     { Icon: CheckCircle2,  desc: "Issue has been resolved" },
-  closed:       { Icon: Archive,       desc: "Complaint closed" },
+  submitted:    { Icon: FileText },
+  under_review: { Icon: Search },
+  assigned:     { Icon: UserCheck },
+  in_progress:  { Icon: Wrench },
+  escalated:    { Icon: AlertTriangle },
+  resolved:     { Icon: CheckCircle2 },
+  closed:       { Icon: Archive },
 };
 
 const STATUS_ORDER = {
@@ -34,6 +35,7 @@ function formatDate(d) {
 }
 
 export default function ComplaintTimeline({ status, statusLog = [], createdAt, slaDeadline }) {
+  const { t } = useTranslation();
   const currentIndex = STATUS_ORDER[status] ?? 0;
   const isFinished = status === "resolved" || status === "closed";
 
@@ -92,18 +94,18 @@ export default function ComplaintTimeline({ status, statusLog = [], createdAt, s
                     ${isCurrent && !isEscalated ? "text-primary-700"  : ""}
                     ${isCurrent &&  isEscalated ? "text-red-700"      : ""}
                     ${isPending                 ? "text-gray-400"     : ""}
-                  `}>{step.label}</span>
+                  `}>{t(`complaint.${step.key}`)}</span>
 
                   {/* Step description */}
                   {!isPending && (
                     <p className={`text-[11px] mt-0.5 leading-snug
                       ${isDone    ? "text-emerald-500/80" : ""}
                       ${isCurrent ? "text-gray-500"       : ""}
-                    `}>{STEP_META[step.key]?.desc}</p>
+                    `}>{t(`complaint.desc_${step.key}`)}</p>
                   )}
 
                   {logEntry?.changed_by_name && (
-                    <p className="text-xs text-gray-400 mt-0.5">by {logEntry.changed_by_name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t("complaint.by_user", { name: logEntry.changed_by_name })}</p>
                   )}
                   {logEntry?.remarks && (
                     <p className="text-xs text-gray-500 mt-1.5 bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-100 max-w-xs italic">
@@ -118,7 +120,7 @@ export default function ComplaintTimeline({ status, statusLog = [], createdAt, s
                         ? "bg-red-50 text-red-600 border-red-200"
                         : "bg-amber-50 text-amber-600 border-amber-200"
                       }`}>
-                      {isOverdue ? "⚠ Overdue" : "Due"}: {formatDate(slaDeadline)}
+                      {isOverdue ? t("complaint.overdue") : t("complaint.due")}: {formatDate(slaDeadline)}
                     </div>
                   )}
                 </div>

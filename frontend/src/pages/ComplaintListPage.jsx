@@ -7,9 +7,9 @@ import PageHeader from "../components/ui/PageHeader";
 import { ArrowLeft, FilePlus2, FileText, ArrowRight } from "lucide-react";
 
 const TABS = [
-  { key: "total",    label: "All" },
-  { key: "pending",  label: "Pending" },
-  { key: "resolved", label: "Resolved" },
+  { key: "total",    labelKey: "complaint.tab_all" },
+  { key: "pending",  labelKey: "complaint.tab_pending" },
+  { key: "resolved", labelKey: "complaint.tab_resolved" },
 ];
 
 function SkeletonRow() {
@@ -60,11 +60,14 @@ export default function ComplaintListPage({ user }) {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <PageHeader
-          title="Complaints"
-          subtitle={`${complaints.length} ${group === "total" ? "total" : group} complaint${complaints.length !== 1 ? "s" : ""}`}
+          title={t("complaint.list_title")}
+          subtitle={t("complaint.list_subtitle", {
+            count: complaints.length,
+            group: t(TABS.find(tb => tb.key === group)?.labelKey || "complaint.tab_all"),
+          })}
           action={user?.role === "citizen" ? (
             <Link to="/raise" className="btn-saffron">
-              <FilePlus2 className="w-4 h-4" /> Raise New
+              <FilePlus2 className="w-4 h-4" /> {t("complaint.raise_new")}
             </Link>
           ) : null}
         />
@@ -78,7 +81,7 @@ export default function ComplaintListPage({ user }) {
               ${group === tab.key
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"}`}>
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
@@ -104,12 +107,12 @@ export default function ComplaintListPage({ user }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 whitespace-nowrap">ID</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3">Title</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 whitespace-nowrap">Status</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 hidden sm:table-cell">Citizen</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 hidden md:table-cell whitespace-nowrap">Ward</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 whitespace-nowrap">Age</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 whitespace-nowrap">{t("dashboard.id")}</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3">{t("dashboard.title")}</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 whitespace-nowrap">{t("complaint.status")}</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 hidden sm:table-cell">{t("dashboard.citizen")}</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 hidden md:table-cell whitespace-nowrap">{t("area.ward")}</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-3 whitespace-nowrap">{t("dashboard.age")}</th>
                   <th className="w-8" />
                 </tr>
               </thead>
@@ -140,7 +143,7 @@ export default function ComplaintListPage({ user }) {
                         {c.ward_name ? ` ${c.ward_name}` : ""}
                       </td>
                       <td className={`px-4 py-3.5 whitespace-nowrap text-xs ${ageColor}`}>
-                        {ageDays === 0 ? "Today" : `${ageDays}d`}
+                        {ageDays === 0 ? t("common.today") : t("common.day_short", { count: ageDays })}
                       </td>
                       <td className="pr-4 py-3.5">
                         <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500 transition-colors" />

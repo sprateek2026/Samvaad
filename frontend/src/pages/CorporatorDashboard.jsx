@@ -73,7 +73,7 @@ export default function CorporatorDashboard({ user }) {
       <PageHeader
         title={stats.ward_name || t("app_name")}
         subtitle={stats.corporator_name}
-        breadcrumb={["Corporator Dashboard"]}
+        breadcrumb={[t("nav.corporator_dashboard")]}
       />
 
       {/* KPI cards */}
@@ -88,7 +88,7 @@ export default function CorporatorDashboard({ user }) {
 
       {stats.overdue > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700 text-sm">
-          ⚠️ {stats.overdue} past SLA deadline ⏰
+          ⚠️ {stats.overdue} {t("admin.overdue")} ⏰
         </div>
       )}
 
@@ -108,7 +108,7 @@ export default function CorporatorDashboard({ user }) {
           ) : <p className="text-gray-400 text-sm">{t("dashboard.no_data")}</p>}
         </div>
         <div className="ds-card p-6">
-          <h3 className="font-semibold text-gray-700 mb-4">{t("dashboard.pending")} vs {t("dashboard.resolved")}</h3>
+          <h3 className="font-semibold text-gray-700 mb-4">{t("dashboard.pending")} {t("dashboard.vs")} {t("dashboard.resolved")}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>

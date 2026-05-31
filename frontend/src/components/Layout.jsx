@@ -54,7 +54,7 @@ export default function Layout({ children, user, onLogout }) {
   const navLinks = [
     { to: '/',          label: t('nav.dashboard'),  icon: LayoutDashboard, show: true },
     { to: '/raise',     label: t('nav.raise_issue'), icon: FilePlus2, show: user.role === 'citizen' },
-    { to: '/complaints',label: 'My Complaints',      icon: FileSearch, show: user.role === 'citizen' },
+    { to: '/complaints',label: t('nav.my_complaints'), icon: FileSearch, show: user.role === 'citizen' },
   ];
 
   function handleLogout() { onLogout(); navigate('/login'); }
@@ -74,7 +74,7 @@ export default function Layout({ children, user, onLogout }) {
             </div>
             <div className="leading-tight">
               <div className="text-white font-bold text-base tracking-tight leading-none">Samvaad</div>
-              <div className="text-white/40 text-[10px] leading-none mt-0.5 hidden sm:block">Govt. of Maharashtra</div>
+              <div className="text-white/40 text-[10px] leading-none mt-0.5 hidden sm:block">{t('nav.govt')}</div>
             </div>
           </Link>
 
@@ -141,14 +141,14 @@ export default function Layout({ children, user, onLogout }) {
                                 py-1 z-50 animate-scale-in origin-top-right">
                   <div className="px-3 py-2 border-b border-gray-100 mb-1">
                     <p className="text-xs font-semibold text-gray-900 truncate">{user.full_name}</p>
-                    <p className="text-[10px] text-gray-400 capitalize">{user.role}</p>
+                    <p className="text-[10px] text-gray-400">{t(`roles.${user.role}`, user.role)}</p>
                   </div>
                   <Link to="/complaints" onClick={() => setProfileOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                    <FileText className="w-4 h-4 text-gray-400" /> My Complaints
+                    <FileText className="w-4 h-4 text-gray-400" /> {t('nav.my_complaints')}
                   </Link>
                   <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                    <Settings className="w-4 h-4 text-gray-400" /> Settings
+                    <Settings className="w-4 h-4 text-gray-400" /> {t('nav.settings')}
                   </button>
                   <div className="border-t border-gray-100 mt-1 pt-1">
                     <button onClick={handleLogout}
@@ -201,7 +201,7 @@ export default function Layout({ children, user, onLogout }) {
       <DrawerPanel
         isOpen={notifOpen}
         onClose={() => setNotifOpen(false)}
-        title={`Notifications${unread > 0 ? ` (${unread})` : ''}`}
+        title={`${t('nav.notifications')}${unread > 0 ? ` (${unread})` : ''}`}
       >
         <NotificationDrawer notifications={notifications} />
       </DrawerPanel>

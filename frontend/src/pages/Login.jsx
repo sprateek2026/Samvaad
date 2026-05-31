@@ -68,8 +68,8 @@ export default function Login({ onLogin }) {
               <ShivajiIcon size={20} />
             </div>
             <div>
-              <div className="text-white/[.55] text-[0.62rem] uppercase tracking-[0.08em]">Government of</div>
-              <div className="text-white text-[0.78rem] font-semibold">Maharashtra</div>
+              <div className="text-white/[.55] text-[0.62rem] uppercase tracking-[0.08em]">{t("auth.govt_of")}</div>
+              <div className="text-white text-[0.78rem] font-semibold">{t("auth.maharashtra")}</div>
             </div>
           </div>
 
@@ -79,19 +79,19 @@ export default function Login({ onLogin }) {
               <Megaphone className="w-7 h-7 text-white" />
               <h1 className="text-white text-[2.75rem] font-bold leading-none tracking-tight">Samvaad</h1>
             </div>
-            <p className="text-white/60 text-sm tracking-[0.15em] uppercase">Smart Governance Portal</p>
+            <p className="text-white/60 text-sm tracking-[0.15em] uppercase">{t("auth.smart_governance")}</p>
           </div>
 
           <p className="text-white/[.65] text-sm leading-relaxed mb-auto max-w-[300px]">
-            A unified digital platform connecting citizens and government for faster, transparent, and accountable governance across Maharashtra.
+            {t("auth.portal_intro")}
           </p>
 
           {/* Feature bullets */}
           <div className="flex flex-col gap-3.5">
             {[
-              { icon: "⚡", text: "Real-time grievance tracking" },
-              { icon: "🔒", text: "Secure OTP-based authentication" },
-              { icon: "📋", text: "Integrated with e-governance services" },
+              { icon: "⚡", text: t("auth.feature_realtime") },
+              { icon: "🔒", text: t("auth.feature_secure") },
+              { icon: "📋", text: t("auth.feature_egov") },
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-3">
                 <div className="w-[30px] h-[30px] flex-shrink-0 bg-saffron-500/10 border border-saffron-500/30 rounded-[7px] flex items-center justify-center text-sm">
@@ -107,8 +107,8 @@ export default function Login({ onLogin }) {
       {/* ── Right form panel ── */}
       <div className="flex-1 bg-white flex flex-col items-center justify-center px-8 py-12">
         <div className="animate-login-card w-full max-w-[400px]">
-          <h2 className="text-[1.7rem] font-bold text-gray-900 mb-1.5">Welcome back</h2>
-          <p className="text-gray-500 text-sm mb-8">Sign in to access Maharashtra&apos;s governance services</p>
+          <h2 className="text-[1.7rem] font-bold text-gray-900 mb-1.5">{t("auth.welcome_back")}</h2>
+          <p className="text-gray-500 text-sm mb-8">{t("auth.signin_subtitle")}</p>
 
           {/* Role pill toggle */}
           <div className="mb-5">
@@ -132,14 +132,14 @@ export default function Login({ onLogin }) {
                           ? "text-gray-300 cursor-not-allowed"
                           : "text-gray-600 hover:bg-gray-100"
                     }`}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                    {t(`roles.${role}`, role)}
                   </button>
                 );
               })}
             </div>
             {!selectedRole && (
               <p className="text-xs text-saffron-600 mt-1.5 font-medium">
-                ↑ Choose your role to continue
+                {t("auth.choose_role_hint")}
               </p>
             )}
           </div>

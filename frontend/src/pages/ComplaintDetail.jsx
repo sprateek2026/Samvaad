@@ -132,7 +132,7 @@ export default function ComplaintDetail({ user }) {
 
       {/* Timeline */}
       <div className="ds-card p-5 mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Progress</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">{t("common.progress")}</h3>
         <ComplaintTimeline
           status={complaint.status}
           statusLog={complaint.status_log || []}
@@ -143,7 +143,7 @@ export default function ComplaintDetail({ user }) {
 
       {/* Description */}
       <div className="ds-card p-5 mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">{t("complaint.description")}</h3>
         <p className="text-sm text-gray-700 leading-relaxed">{complaint.description}</p>
         {complaint.location_lat && (
           <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500">
@@ -163,8 +163,8 @@ export default function ComplaintDetail({ user }) {
             <h3 className="text-sm font-semibold text-gray-700">{t("complaint.ai_classification")}</h3>
           </div>
           <p className="text-sm text-gray-700 mb-2">
-            Classified as <span className="font-semibold text-primary-700">{complaint.ai_category}</span>
-            {" "}via <span className="text-gray-500">{complaint.ai_method}</span>
+            {t("complaint.classified_as")} <span className="font-semibold text-primary-700">{complaint.ai_category}</span>
+            {" "}{t("complaint.via")} <span className="text-gray-500">{complaint.ai_method}</span>
           </p>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -181,7 +181,7 @@ export default function ComplaintDetail({ user }) {
       {/* Images */}
       {complaint.images?.length > 0 && (
         <div className="ds-card p-5 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Photos ({complaint.images.length})</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">{t("complaint.photos_count", { count: complaint.images.length })}</h3>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {complaint.images.map((img) => (
               <button key={img.id} onClick={() => setLightbox(img)}
@@ -203,13 +203,13 @@ export default function ComplaintDetail({ user }) {
         <div className="ds-card p-5 mb-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-1">{t("complaint.update_status")}</h3>
           <p className="text-xs text-gray-400 mb-3">
-            Current: <span className="font-semibold text-gray-600 capitalize">{complaint.status.replace(/_/g," ")}</span>
+            {t("complaint.current")}: <span className="font-semibold text-gray-600">{t(`complaint.${complaint.status}`)}</span>
             {NEXT_STATUS[complaint.status] && (
-              <span> · Suggested next: <span className="font-semibold text-primary-600 capitalize">{NEXT_STATUS[complaint.status].replace(/_/g," ")} →</span></span>
+              <span> · {t("complaint.suggested_next")}: <span className="font-semibold text-primary-600">{t(`complaint.${NEXT_STATUS[complaint.status]}`)} →</span></span>
             )}
           </p>
           <textarea value={remarks} onChange={e => setRemarks(e.target.value)}
-            placeholder="Add remarks or notes..."
+            placeholder={t("complaint.add_remarks")}
             className="ds-input mb-3 resize-none" rows={2} />
           <div className="flex flex-wrap gap-2">
             {ALL_CORP_STATUSES
@@ -218,11 +218,11 @@ export default function ComplaintDetail({ user }) {
                 const isSuggested = NEXT_STATUS[complaint.status] === s;
                 return (
                   <button key={s} onClick={() => handleStatusUpdate(s)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all capitalize
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all
                       ${STATUS_UPDATE_COLORS[s]}
                       ${isSuggested ? "ring-2 ring-offset-1 ring-primary-400 shadow-sm" : ""}
                     `}>
-                    {isSuggested && "→ "}Mark as {s.replace(/_/g," ")}
+                    {isSuggested && "→ "}{t("complaint.mark_as", { status: t(`complaint.${s}`) })}
                   </button>
                 );
               })}
@@ -255,15 +255,15 @@ export default function ComplaintDetail({ user }) {
           {pendingRating > 0 && pendingRating <= 2 && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-xs text-amber-800 flex items-start gap-2">
               <span>⚠️</span>
-              <span>Rating 1–2 stars will reopen this complaint for further review. Tap the star again to confirm.</span>
+              <span>{t("complaint.low_rating_warning")}</span>
             </div>
           )}
-          {rating > 0 && !pendingRating && <p className="text-xs text-gray-500">You rated this {rating}/5</p>}
+          {rating > 0 && !pendingRating && <p className="text-xs text-gray-500">{t("complaint.you_rated", { rating })}</p>}
         </div>
       )}
 
       {/* Image lightbox */}
-      <SimpleDrawer isOpen={!!lightbox} onClose={() => setLightbox(null)} title="Photo">
+      <SimpleDrawer isOpen={!!lightbox} onClose={() => setLightbox(null)} title={t("common.photo")}>
         {lightbox && (
           <img src={assetUrl(lightbox.file_path)} alt=""
             className="w-full rounded-xl" />

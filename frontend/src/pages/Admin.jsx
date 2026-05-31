@@ -104,21 +104,21 @@ function DashboardTab() {
   const byCategoryData = data.by_category || [];
   const trendData = data.trend_last_30 || [];
 
-  const selectedWardName = wardFilter ? wards.find(w => w.id === parseInt(wardFilter))?.ward_name : "All Wards";
+  const selectedWardName = wardFilter ? wards.find(w => w.id === parseInt(wardFilter))?.ward_name : t("admin.all_wards");
 
   return (
     <div>
       <div className="ds-card p-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-xs font-medium text-gray-500 block mb-2">Filter by Ward</label>
+            <label className="text-xs font-medium text-gray-500 block mb-2">{t("admin.filter_by_ward")}</label>
             <select value={wardFilter} onChange={e => setWardFilter(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm min-w-64">
               <option value="">{t("admin.all_wards")}</option>
               {wards.map(w => <option key={w.id} value={w.id}>#{w.ward_number} — {w.ward_name}</option>)}
             </select>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Currently viewing</p>
+            <p className="text-xs text-gray-500">{t("admin.currently_viewing")}</p>
             <p className="text-lg font-semibold text-indigo-700">{selectedWardName}</p>
           </div>
         </div>
@@ -166,7 +166,7 @@ function DashboardTab() {
         </div>
 
         <div className="ds-card p-6">
-          <h3 className="font-semibold text-gray-700 mb-4">{t("dashboard.pending")} vs {t("dashboard.resolved")}</h3>
+          <h3 className="font-semibold text-gray-700 mb-4">{t("dashboard.pending")} {t("dashboard.vs")} {t("dashboard.resolved")}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
@@ -217,10 +217,10 @@ function DashboardTab() {
       </div>
 
       <div className="grid md:grid-cols-4 gap-4 mb-6">
-        <InsightCard icon="🏛️" label="Total Wards" value={wards.length} color="bg-blue-50 text-blue-700" />
-        <InsightCard icon="👥" label="Active Representatives" value={data.active_reps || "—"} color="bg-green-50 text-green-700" />
-        <InsightCard icon="⭐" label="Avg Satisfaction" value={data.avg_satisfaction ? `${data.avg_satisfaction}★` : "—"} color="bg-yellow-50 text-yellow-700" />
-        <InsightCard icon="📊" label="Resolution Rate" value={data.resolution_rate ? `${data.resolution_rate}%` : "—"} color="bg-purple-50 text-purple-700" />
+        <InsightCard icon="🏛️" label={t("admin.total_wards")} value={wards.length} color="bg-blue-50 text-blue-700" />
+        <InsightCard icon="👥" label={t("admin.active_reps")} value={data.active_reps || "—"} color="bg-green-50 text-green-700" />
+        <InsightCard icon="⭐" label={t("admin.avg_satisfaction")} value={data.avg_satisfaction ? `${data.avg_satisfaction}★` : "—"} color="bg-yellow-50 text-yellow-700" />
+        <InsightCard icon="📊" label={t("admin.resolution_rate")} value={data.resolution_rate ? `${data.resolution_rate}%` : "—"} color="bg-purple-50 text-purple-700" />
       </div>
 
       <div className="ds-card p-6">
@@ -364,23 +364,23 @@ function RepresentativesTab() {
 
           <input
             type="text"
-            placeholder="Search by name or party..."
+            placeholder={t("admin.search_name_party")}
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
 
           <select value={partyFilter} onChange={e => setPartyFilter(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
-            <option value="">Filter by Party</option>
+            <option value="">{t("admin.filter_by_party")}</option>
             {parties.map(party => <option key={party} value={party}>{party}</option>)}
           </select>
         </div>
 
         {selectedWard && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">{selectedWard.ward_name} — {filteredReps.length} {filteredReps.length === 1 ? "representative" : "representatives"}</span>
+            <span className="text-sm text-gray-500">{selectedWard.ward_name} — {filteredReps.length} {filteredReps.length === 1 ? t("admin.representative") : t("admin.representatives_plural")}</span>
             {(searchText || partyFilter) && (
-              <button onClick={() => { setSearchText(""); setPartyFilter(""); }} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Clear filters</button>
+              <button onClick={() => { setSearchText(""); setPartyFilter(""); }} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">{t("admin.clear_filters")}</button>
             )}
           </div>
         )}
@@ -390,7 +390,7 @@ function RepresentativesTab() {
 
       {wardId && (
         <div>
-          <h3 className="text-md font-semibold text-gray-700 mb-3">{t("area.corporator")}{"s"}</h3>
+          <h3 className="text-md font-semibold text-gray-700 mb-3">{t("admin.corporators_heading")}</h3>
           <div className="grid md:grid-cols-2 gap-4 mb-8">
             {CORPORATOR_LABELS.map(label => {
               const rep = repForLabel(label);
@@ -413,7 +413,7 @@ function RepresentativesTab() {
                         {rep.party && <p className="text-xs text-gray-500">{rep.party}</p>}
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => setKycRep(rep)} className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Know Your Corporator">
+                        <button onClick={() => setKycRep(rep)} className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title={t("admin.know_your_corporator")}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </button>
                         <button onClick={() => openEditCorp(label)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title={t("admin.edit_rep")}>
@@ -452,13 +452,13 @@ function RepresentativesTab() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-sm truncate">{rep.name}</p>
-                          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded capitalize">{type}</span>
+                          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{t(`area.${type}`)}</span>
                         </div>
                         {rep.party && <p className="text-xs text-gray-500">{rep.party}</p>}
                         {rep.constituency && <p className="text-xs text-gray-400">{rep.constituency}</p>}
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => setKycRep(rep)} className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Know Your Corporator">
+                        <button onClick={() => setKycRep(rep)} className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title={t("admin.know_your_corporator")}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </button>
                         <button onClick={() => openEdit(type)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title={t("admin.edit_rep")}>
@@ -473,7 +473,7 @@ function RepresentativesTab() {
                     <>
                       <AvatarPlaceholder size="w-10 h-10" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-400 capitalize">{t("admin.no_rep")} {type.toUpperCase()}</p>
+                        <p className="text-sm text-gray-400">{t("admin.no_rep")} {t(`area.${type}`)}</p>
                       </div>
                       <button onClick={() => openEdit(type)} className="px-8 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex-shrink-0 font-medium">{t("admin.add_rep")}</button>
                     </>
@@ -594,17 +594,18 @@ function EditRepModal({ rep, loading, onSave, onClose }) {
 // ── KYC Modal (Know Your Corporator) ──────────────────────────────
 
 function KycModal({ rep, onClose }) {
+  const { t } = useTranslation();
   return (
     <SimpleDrawer
       isOpen={true}
       onClose={onClose}
-      title={`Know Your ${rep.type.charAt(0).toUpperCase() + rep.type.slice(1)}`}
+      title={t("admin.know_your", { type: t(`area.${rep.type}`) })}
     >
       <div className="flex items-center gap-4 mb-6">
         <RepresentativeAvatar photoPath={rep.photo_path} name={rep.name} type={rep.type} size="xl" showHover={false} />
         <div>
           <p className="text-xl font-bold text-gray-800">{rep.name}</p>
-          <p className="text-sm text-gray-500 capitalize">{rep.type}{rep.label ? ` (${rep.label})` : ""}</p>
+          <p className="text-sm text-gray-500">{t(`area.${rep.type}`)}{rep.label ? ` (${rep.label})` : ""}</p>
           {rep.party && <p className="text-sm text-gray-500">{rep.party}</p>}
         </div>
       </div>
@@ -612,38 +613,38 @@ function KycModal({ rep, onClose }) {
       <div className="grid grid-cols-2 gap-4 text-sm">
         {rep.contact && (
           <div>
-            <span className="text-gray-500 block">Contact</span>
+            <span className="text-gray-500 block">{t("admin.contact")}</span>
             <span className="font-medium">{rep.contact}</span>
           </div>
         )}
         {rep.term && (
           <div>
-            <span className="text-gray-500 block">Term</span>
+            <span className="text-gray-500 block">{t("admin.term")}</span>
             <span className="font-medium">{rep.term}</span>
           </div>
         )}
         {rep.constituency && (
           <div className="col-span-2">
-            <span className="text-gray-500 block">Constituency</span>
+            <span className="text-gray-500 block">{t("admin.constituency")}</span>
             <span className="font-medium">{rep.constituency}</span>
           </div>
         )}
         {rep.bio && (
           <div className="col-span-2">
-            <span className="text-gray-500 block">Bio</span>
+            <span className="text-gray-500 block">{t("admin.bio")}</span>
             <p className="text-gray-700">{rep.bio}</p>
           </div>
         )}
         {rep.achievements && (
           <div className="col-span-2">
-            <span className="text-gray-500 block">Achievements</span>
+            <span className="text-gray-500 block">{t("admin.achievements")}</span>
             <p className="text-gray-700 whitespace-pre-line">{rep.achievements}</p>
           </div>
         )}
       </div>
 
       {!rep.contact && !rep.bio && !rep.term && !rep.achievements && (
-        <p className="text-gray-400 text-sm text-center py-4">No additional details available</p>
+        <p className="text-gray-400 text-sm text-center py-4">{t("admin.no_details")}</p>
       )}
     </SimpleDrawer>
   );
