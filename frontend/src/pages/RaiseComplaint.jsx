@@ -20,7 +20,7 @@ const CATEGORY_GRADIENTS = [
 ];
 
 const STEP_ICONS = [Tag, ListTree, FileEdit, CheckCircle2];
-const STEP_LABELS = ["step_category","step_sub_issue","step_details","step_done"];
+const STEP_COUNT = 4;
 
 const SLA_DAYS = { water: 3, road: 7, electric: 2, waste: 5, garbage: 5, health: 3, sanit: 5, tree: 10, park: 10, education: 14, light: 2, drain: 4 };
 
@@ -274,13 +274,13 @@ export default function RaiseComplaint({ user }) {
 
       {/* Step Progress */}
       <div className="flex items-center justify-center mb-10">
-        {STEP_LABELS.map((label, i) => {
+        {Array.from({ length: STEP_COUNT }, (_, i) => {
           const stepNum = i + 1;
           const isActive = stepNum === step;
           const isDone = stepNum < step;
           const StepIcon = STEP_ICONS[i];
           return (
-            <div key={label} className="flex items-center">
+            <div key={i} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
                   isDone ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" :
@@ -289,13 +289,8 @@ export default function RaiseComplaint({ user }) {
                 }`}>
                   {isDone ? <CheckCircle2 size={16} /> : <StepIcon size={16} />}
                 </div>
-                <span className={`text-xs mt-1.5 font-medium transition-colors duration-200 ${
-                  isActive ? "text-primary-600" : isDone ? "text-emerald-600" : "text-gray-400"
-                }`}>
-                  {t(label)}
-                </span>
               </div>
-              {i < STEP_LABELS.length - 1 && (
+              {i < STEP_COUNT - 1 && (
                 <div className={`w-16 md:w-24 h-0.5 mx-3 rounded transition-colors duration-300 ${
                   isDone ? "bg-emerald-400" : "bg-gray-200"
                 }`} />
