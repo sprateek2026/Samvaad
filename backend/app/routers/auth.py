@@ -116,22 +116,17 @@ def register(req: RegisterRequest, db: sqlite3.Connection = Depends(get_db)):
         ward_id = ward_info["id"]
 
     try:
-        cur = db.execute(
+        db.execute(
             """INSERT INTO users (firebase_uid, full_name, mobile, pin_code, address, latitude, longitude, ward_id, role)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'citizen')""",
             (req.firebase_uid, req.full_name, req.mobile, req.pin_code,
              req.address, req.latitude, req.longitude, ward_id)
         )
         db.commit()
-        user_id = cur.lastrowid
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=400, detail="User already exists")
 
-    return {
-        "user_id": user_id,
-        "message": "Registration successful",
-        "ward": ward_info
-    }
+    return _get_profile(req.firebase_uid, db)
 
 
 @router.get("/profile")

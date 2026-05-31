@@ -154,14 +154,11 @@ export default function Register({ onLogin }) {
     setLoading(true);
     try {
       const res = await authAPI.register({ ...form, firebase_uid: token, mobile });
-      setAreaInfo(res.data.ward);
-      const profile = await authAPI.profile();
-      onLogin({ ...profile.data, token });
+      onLogin({ ...res.data, token });
       navigate("/");
     } catch (err) {
       const detail = err.response?.data?.detail || err.message;
-      const url = err.config?.url || import.meta.env.VITE_API_URL || "unknown";
-      alert(`${t("auth.registration_error")}${detail}\n\n(API: ${url})`);
+      alert(t("auth.registration_error") + detail);
     }
     setLoading(false);
   }
