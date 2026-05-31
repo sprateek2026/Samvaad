@@ -167,7 +167,7 @@ def analytics_overview(
 def _build_corporators(db, ward_id, fallback_names):
     """Return all 4 corporator slots for a ward, falling back to static columns."""
     rows = db.execute(
-        "SELECT name, party, photo_path, label FROM representatives WHERE ward_id = ? AND type = 'corporator' ORDER BY label",
+        "SELECT id, name, party, photo_path, label FROM representatives WHERE ward_id = ? AND type = 'corporator' ORDER BY label",
         (ward_id,)
     ).fetchall()
     by_label = {r["label"]: {"id": r["id"], "name": r["name"], "party": r["party"], "photo_path": r["photo_path"]} for r in rows}
