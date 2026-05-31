@@ -73,6 +73,7 @@ export default function Register({ onLogin }) {
     try {
       const geo = await gisAPI.reverseGeocode({ lat, lng });
       if (geo.data?.display_name) setForm(f => ({ ...f, address: geo.data.display_name }));
+      if (geo.data?.address?.postcode) setForm(f => ({ ...f, pin_code: geo.data.address.postcode }));
     } catch {}
   }
 
@@ -88,6 +89,7 @@ export default function Register({ onLogin }) {
     try {
       const geo = await gisAPI.reverseGeocode({ lat, lng });
       if (geo.data?.display_name) setForm(f => ({ ...f, address: geo.data.display_name }));
+      if (geo.data?.address?.postcode) setForm(f => ({ ...f, pin_code: geo.data.address.postcode }));
     } catch {}
   }
 
@@ -174,6 +176,7 @@ export default function Register({ onLogin }) {
       try {
         const geo = await gisAPI.reverseGeocode({ lat: latitude, lng: longitude });
         if (geo.data?.display_name) setForm(f => ({ ...f, address: geo.data.display_name }));
+        if (geo.data?.address?.postcode) setForm(f => ({ ...f, pin_code: geo.data.address.postcode }));
       } catch {}
       if (map.current) map.current.flyTo({ center: [longitude, latitude], zoom: 14 });
     }, () => alert(t("auth.location_error")));
@@ -198,7 +201,8 @@ export default function Register({ onLogin }) {
         <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
 
         <label className="block text-sm font-medium text-gray-700 mb-1">{t("auth.pin_code")}</label>
-        <input type="text" value={form.pin_code} onChange={(e) => setForm({ ...form, pin_code: e.target.value })} placeholder="411038" className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
+        <input type="text" value={form.pin_code} onChange={(e) => setForm({ ...form, pin_code: e.target.value })} placeholder="411038" maxLength={6} className="w-full px-4 py-2 border border-gray-300 rounded-xl mb-1 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition" />
+        <p className="text-[11px] text-amber-600 mb-3">GPS may auto-fill this — verify it matches your actual PIN code.</p>
 
         {localities.length > 0 && (
           <>

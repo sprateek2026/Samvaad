@@ -141,7 +141,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
               </span>
               <button
                 onClick={() => { setWardPin(user?.pin_code || ""); setWardOptions([]); setWardError(""); setSelectedWardId(user?.ward?.id || null); setWardDrawer(true); }}
-                className="flex items-center gap-1 text-[11px] text-primary-300 hover:text-white transition-colors ml-0.5">
+                className="flex items-center gap-1 text-[11px] bg-white/15 hover:bg-white/25 text-white px-1.5 py-0.5 rounded transition-colors">
                 <Pencil className="w-3 h-3" /> Change
               </button>
             </div>
