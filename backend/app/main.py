@@ -190,11 +190,46 @@ def _apply_pincode_corrections():
         print(f"[seed] pincode corrections skipped: {e}")
 
 
+def _seed_complaints_if_empty():
+    """Seed 30 sample complaints on a fresh DB where wards are already present
+    but no complaints exist (e.g. Railway after auto-seed ran in a previous boot).
+    Idempotent — skips when any complaint exists."""
+    try:
+        from .database import get_connection
+        conn = get_connection()
+        try:
+            count = conn.execute("SELECT COUNT(*) FROM complaints").fetchone()[0]
+        finally:
+            conn.close()
+        if count > 0:
+            return
+
+        import subprocess
+        import sys
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        seed_script = os.path.join(repo_root, "tools", "seed_database.py")
+        if not os.path.exists(seed_script):
+            print("[seed] seed_database.py not found; skipping complaint seed")
+            return
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        result = subprocess.run(
+            [sys.executable, seed_script], env=env,
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode == 0:
+            print("[seed] sample complaints seeded OK")
+        else:
+            print(f"[seed] complaint seed failed: {(result.stderr or '')[-400:]}")
+    except BaseException as e:
+        print(f"[seed] complaint seed skipped: {e}")
+
+
 @app.on_event("startup")
 def startup():
     init_db()
     _auto_seed_if_empty()
     _apply_pincode_corrections()
+    _seed_complaints_if_empty()
 
 
 @app.get("/health")
