@@ -103,7 +103,7 @@ def all_complaints(
     status: str | None = None,
     status_group: str | None = None,
     page: int = 1,
-    limit: int = 25,
+    limit: int = 100,
     db: sqlite3.Connection = Depends(get_db),
     token_data: dict = Depends(verify_firebase_token)
 ):
@@ -285,10 +285,12 @@ def admin_dashboard(
     ).fetchall()
 
     recent = db.execute(
-        f"""SELECT c.*, u.full_name as citizen_name
-            FROM complaints c JOIN users u ON c.citizen_id = u.id
+        f"""SELECT c.*, u.full_name as citizen_name, w.ward_number, w.ward_name
+            FROM complaints c
+            JOIN users u ON c.citizen_id = u.id
+            LEFT JOIN wards w ON c.ward_id = w.id
             {base_where}
-            ORDER BY c.created_at DESC LIMIT 20""",
+            ORDER BY c.created_at DESC LIMIT 200""",
         params
     ).fetchall()
 

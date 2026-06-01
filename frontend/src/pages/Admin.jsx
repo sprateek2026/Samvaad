@@ -254,21 +254,27 @@ function DashboardTab() {
 
       <div className="ds-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-700">{t("dashboard.recent_complaints")} <span className="text-xs font-normal text-gray-400">(latest 20)</span></h3>
+          <h3 className="font-semibold text-gray-700">
+            {t("dashboard.recent_complaints")}
+            <span className="ml-2 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+              {data.recent_complaints?.length} / {data.total} total
+            </span>
+          </h3>
           <button onClick={() => navigate("/complaints")}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+            className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
             {t("dashboard.view_all")} ({data.total}) →
           </button>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 bg-white">
               <tr className="text-left text-gray-500 border-b">
-                <th className="pb-2 pr-3">{t("dashboard.id")}</th>
-                <th className="pb-2 pr-3">{t("dashboard.title")}</th>
-                <th className="pb-2 pr-3">{t("complaint.status")}</th>
-                <th className="pb-2 pr-3">{t("dashboard.citizen")}</th>
-                <th className="pb-2">{t("dashboard.age")}</th>
+                <th className="pb-2 pr-3 text-xs font-semibold uppercase tracking-wide">{t("dashboard.id")}</th>
+                <th className="pb-2 pr-3 text-xs font-semibold uppercase tracking-wide">{t("dashboard.title")}</th>
+                <th className="pb-2 pr-3 text-xs font-semibold uppercase tracking-wide">{t("complaint.status")}</th>
+                <th className="pb-2 pr-3 text-xs font-semibold uppercase tracking-wide hidden sm:table-cell">{t("dashboard.citizen")}</th>
+                <th className="pb-2 pr-3 text-xs font-semibold uppercase tracking-wide hidden md:table-cell">{t("area.ward")}</th>
+                <th className="pb-2 text-xs font-semibold uppercase tracking-wide">{t("dashboard.age")}</th>
               </tr>
             </thead>
             <tbody>
@@ -276,19 +282,30 @@ function DashboardTab() {
                 <tr key={c.id}
                   onClick={() => navigate(`/complaint/${c.complaint_id}`)}
                   className="border-b border-gray-100 hover:bg-indigo-50/40 cursor-pointer transition-colors">
-                  <td className="py-2 pr-3 font-mono text-xs text-gray-500">{c.complaint_id}</td>
+                  <td className="py-2 pr-3 font-mono text-xs text-gray-500 whitespace-nowrap">{c.complaint_id}</td>
                   <td className="py-2 pr-3 max-w-xs truncate font-medium text-gray-800">{c.title?.substring(0, 50)}</td>
-                  <td className="py-2 pr-3"><StatusBadge status={c.status} /></td>
-                  <td className="py-2 pr-3 text-gray-500 text-xs">{c.citizen_name}</td>
-                  <td className="py-2 text-gray-500 text-xs">{daysAgo(c.created_at)}d ago</td>
+                  <td className="py-2 pr-3 whitespace-nowrap"><StatusBadge status={c.status} /></td>
+                  <td className="py-2 pr-3 text-gray-500 text-xs hidden sm:table-cell whitespace-nowrap">{c.citizen_name}</td>
+                  <td className="py-2 pr-3 text-gray-500 text-xs hidden md:table-cell whitespace-nowrap">
+                    {c.ward_number ? `#${c.ward_number}` : "—"}
+                  </td>
+                  <td className="py-2 text-gray-500 text-xs whitespace-nowrap">{daysAgo(c.created_at)}d ago</td>
                 </tr>
               ))}
               {(!data.recent_complaints || data.recent_complaints.length === 0) && (
-                <tr><td colSpan={5} className="py-4 text-center text-gray-400 text-sm">{t("dashboard.no_complaints")}</td></tr>
+                <tr><td colSpan={6} className="py-4 text-center text-gray-400 text-sm">{t("dashboard.no_complaints")}</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        {data.recent_complaints?.length < data.total && (
+          <div className="mt-3 text-center">
+            <button onClick={() => navigate("/complaints")}
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+              + {data.total - data.recent_complaints.length} more complaints — View full list →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

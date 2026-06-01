@@ -43,7 +43,7 @@ export default function ComplaintListPage({ user }) {
       const params = group !== "total" ? { status_group: group } : {};
       let res;
       if (user.role === "corporator")     res = await dashboardAPI.corporatorComplaints(params);
-      else if (user.role === "admin")     res = await adminAPI.complaints({ ...params, page: p });
+      else if (user.role === "admin")     res = await adminAPI.complaints({ ...params, page: p, limit: 100 });
       else                                res = await complaintAPI.list(params);
       setComplaints(res.data.complaints || []);
       if (res.data.total != null) { setTotal(res.data.total); setPages(res.data.pages || 1); setPage(p); }
