@@ -224,12 +224,53 @@ def _seed_complaints_if_empty():
         print(f"[seed] complaint seed skipped: {e}")
 
 
+def _backfill_complaint_coords():
+    """One-time backfill: update seeded complaints that have NULL coords.
+    Idempotent — UPDATE WHERE location_lat IS NULL touches nothing once done."""
+    COORDS = {
+        "PMC-20260515-0001": (18.5195, 73.8553), "PMC-20260516-0002": (18.5158, 73.8630),
+        "PMC-20260517-0003": (18.5308, 73.8475), "PMC-20260518-0004": (18.5210, 73.8600),
+        "PMC-20260519-0005": (18.5590, 73.7876), "PMC-20260520-0006": (18.5180, 73.8553),
+        "PMC-20260520-0007": (18.5074, 73.8477), "PMC-20260521-0008": (18.5308, 73.8475),
+        "PMC-20260521-0009": (18.4980, 73.8280), "PMC-20260522-0010": (18.4973, 73.8209),
+        "PMC-20260522-0011": (18.5143, 73.8580), "PMC-20260523-0012": (18.4996, 73.8358),
+        "PMC-20260523-0013": (18.5282, 73.8431), "PMC-20260524-0014": (18.5590, 73.8076),
+        "PMC-20260524-0015": (18.5238, 73.8475), "PMC-20260525-0016": (18.5504, 73.8727),
+        "PMC-20260525-0017": (18.5195, 73.8605), "PMC-20260526-0018": (18.5143, 73.8490),
+        "PMC-20260526-0019": (18.6298, 73.7997), "PMC-20260527-0020": (18.5018, 73.9260),
+        "PMC-20260527-0021": (18.5250, 73.8650), "PMC-20260527-0022": (18.5679, 73.9143),
+        "PMC-20260528-0023": (18.5093, 73.9308), "PMC-20260528-0024": (18.4528, 73.8601),
+        "PMC-20260528-0025": (18.5188, 73.8559), "PMC-20260529-0026": (18.5509, 73.9489),
+        "PMC-20260529-0027": (18.5988, 73.7616), "PMC-20260530-0028": (18.4860, 73.8267),
+        "PMC-20260530-0029": (18.5074, 73.8053), "PMC-20260531-0030": (18.5204, 73.8567),
+    }
+    try:
+        from .database import get_connection
+        conn = get_connection()
+        try:
+            updated = 0
+            for cid, (lat, lng) in COORDS.items():
+                cur = conn.execute(
+                    "UPDATE complaints SET location_lat=?, location_lng=? WHERE complaint_id=? AND location_lat IS NULL",
+                    (lat, lng, cid)
+                )
+                updated += cur.rowcount
+            if updated:
+                conn.commit()
+                print(f"[seed] backfilled coords for {updated} complaint(s)")
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"[seed] coord backfill skipped: {e}")
+
+
 @app.on_event("startup")
 def startup():
     init_db()
     _auto_seed_if_empty()
     _apply_pincode_corrections()
     _seed_complaints_if_empty()
+    _backfill_complaint_coords()
 
 
 @app.get("/health")
