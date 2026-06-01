@@ -82,7 +82,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
       const token = localStorage.getItem("auth_token");
       onUserUpdate?.({ ...res.data, token });
       setWardDrawer(false);
-    } catch { setWardError(t("area.save_failed")); }
+    } catch (err) { console.error("[saveWard]", err?.response?.data || err); setWardError(t("area.save_failed")); }
     finally { setWardSaving(false); }
   }
 

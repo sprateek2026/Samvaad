@@ -11,7 +11,7 @@ import os
 
 _raw_origins = os.environ.get(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000"
+    "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000"
 )
 _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
@@ -96,54 +96,94 @@ def _auto_seed_if_empty():
 
 
 def _apply_pincode_corrections():
-    """Apply known pincode→ward fixes. Idempotent — safe to run on every startup."""
-    # (pin_code, ward_number) rows that must exist
-    must_have = [
-        ("411058", 32),   # Warje-Malwadi: only ward for this PIN per PMC 2025/26
-    ]
-    # (pin_code, ward_number) rows that must NOT exist (wrong mappings to purge)
-    must_remove = [
-        ("411058", 34),   # Warje-Kondhave Dhavde — not part of PIN 411058
-        ("411058", 35),   # not part of PIN 411058
-    ]
+    """Replace pincode→ward mapping with authoritative PMC 2025/26 data.
+    Idempotent: skips if mapping already has the correct 60 rows keyed to ward 13
+    for pincode 411001 (sentinel that old wrong data used wards 17-19).
+    """
+    # (pin_code, [ward_numbers]) — ward_number per 41-ward PMC 2025/26 delimitation
+    CORRECT = {
+        "411001": [13, 24],
+        "411002": [23, 24],
+        "411003": [8],
+        "411004": [29],
+        "411005": [12],
+        "411006": [6],
+        "411007": [7, 8],
+        "411008": [9, 10],
+        "411009": [27, 36],
+        "411011": [24, 25],
+        "411012": [8],
+        "411013": [16, 17],
+        "411014": [3, 5],
+        "411015": [1, 2],
+        "411016": [7, 12],
+        "411019": [2],
+        "411020": [8],
+        "411021": [9, 10],
+        "411023": [33],
+        "411024": [33],
+        "411025": [4],
+        "411027": [8],
+        "411028": [16],
+        "411030": [25, 27],
+        "411032": [3],
+        "411036": [14],
+        "411037": [20, 21],
+        "411038": [10, 31],
+        "411040": [17, 18],
+        "411041": [34],
+        "411042": [25, 26],
+        "411043": [37],
+        "411045": [9],
+        "411046": [38],
+        "411047": [3],
+        "411048": [19, 40],
+        "411051": [30],
+        "411052": [30],
+        "411057": [9],
+        "411058": [10, 32],
+        "411060": [41],
+        "411067": [1],
+    }
     try:
         from .database import get_connection
         conn = get_connection()
         try:
-            # Remove duplicate (pin_code, ward_id) rows keeping the lowest id
-            conn.execute("""
-                DELETE FROM pincode_ward_mapping
-                WHERE id NOT IN (
-                    SELECT MIN(id) FROM pincode_ward_mapping GROUP BY pin_code, ward_id
-                )
-            """)
-            # Ensure unique index exists so future inserts stay clean
+            # Sentinel: if 411001 already maps to ward_number 13, data is correct
+            sentinel = conn.execute(
+                "SELECT 1 FROM pincode_ward_mapping pwm "
+                "JOIN wards w ON w.id = pwm.ward_id "
+                "WHERE pwm.pin_code = '411001' AND w.ward_number = 13"
+            ).fetchone()
+            if sentinel:
+                # Still enforce unique index to keep DB clean
+                conn.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_pincode_ward_unique
+                    ON pincode_ward_mapping(pin_code, ward_id)
+                """)
+                conn.commit()
+                return
+
+            # Full replacement with correct data
+            conn.execute("DELETE FROM pincode_ward_mapping")
+            count = 0
+            for pin, ward_nums in CORRECT.items():
+                for wn in ward_nums:
+                    ward = conn.execute(
+                        "SELECT id FROM wards WHERE ward_number = ?", (wn,)
+                    ).fetchone()
+                    if ward:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO pincode_ward_mapping (pin_code, ward_id) VALUES (?, ?)",
+                            (pin, ward["id"])
+                        )
+                        count += 1
             conn.execute("""
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_pincode_ward_unique
                 ON pincode_ward_mapping(pin_code, ward_id)
             """)
-            # Purge wrong mappings
-            for pin, ward_num in must_remove:
-                ward = conn.execute(
-                    "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
-                ).fetchone()
-                if ward:
-                    conn.execute(
-                        "DELETE FROM pincode_ward_mapping WHERE pin_code = ? AND ward_id = ?",
-                        (pin, ward["id"])
-                    )
-            # Ensure correct mappings exist
-            for pin, ward_num in must_have:
-                ward = conn.execute(
-                    "SELECT id FROM wards WHERE ward_number = ?", (ward_num,)
-                ).fetchone()
-                if ward:
-                    conn.execute(
-                        "INSERT OR IGNORE INTO pincode_ward_mapping (pin_code, ward_id) VALUES (?, ?)",
-                        (pin, ward["id"])
-                    )
             conn.commit()
-            print("[seed] pincode corrections applied")
+            print(f"[seed] pincode mapping replaced: {count} rows")
         finally:
             conn.close()
     except Exception as e:

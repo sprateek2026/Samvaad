@@ -426,61 +426,51 @@ def seed_sub_categories(conn: sqlite3.Connection):
 
 
 def seed_pincode_wards(conn: sqlite3.Connection):
+    # ward_numbers per PMC 2025/26 41-ward delimitation
+    # cross-referenced against PMC ward formation PDF and Pune pincode directory
     pincode_data = {
-        "411038": [31, 32, 33],
-        "411004": [7, 8, 11],
-        "411005": [25, 26],
-        "411001": [17, 18, 19],
-        "411002": [23, 24, 28],
-        "411003": [27, 28, 29],
-        "411006": [12, 13],
-        "411007": [15, 16],
-        "411008": [9, 10],
-        "411011": [20, 21],
-        "411012": [37, 38, 55],
-        "411013": [49, 50],
-        "411014": [36, 37],
-        "411015": [39, 40],
-        "411016": [1, 2, 8],
-        "411017": [3, 4],
-        "411018": [5, 6, 7],
-        "411019": [41, 42, 43],
-        "411020": [22, 44],
-        "411021": [44, 45],
-        "411022": [46, 47],
-        "411023": [14, 33],
-        "411024": [51, 52],
-        "411025": [34, 35],
-        "411026": [53, 54],
-        "411027": [56, 57, 58],
-        "411028": [48, 49],
-        "411029": [41, 47],
-        "411030": [30, 31],
-        "411031": [36, 37],
-        "411032": [38, 39],
-        "411033": [55, 56],
-        "411034": [34, 53],
-        "411035": [51, 52],
-        "411036": [40, 41],
-        "411037": [32, 33],
-        "411039": [42, 43],
-        "411040": [44, 45],
-        "411041": [14, 15],
-        "411042": [46, 47],
-        "411043": [56, 57],
-        "411044": [48, 49],
-        "411045": [52, 53],
-        "411046": [27, 28],
-        "411047": [24, 25],
-        "411048": [54, 55],
-        "411051": [50, 51],
-        "411052": [57, 58],
-        "411057": [10, 11],
-        "411058": [32],
-        "411060": [34, 35],
-        "411061": [3, 4],
-        "411062": [5, 6],
-        "411067": [1, 2],
+        "411001": [13, 24],    # Pune Camp / Sadashiv Peth: Pune Station + Kasba
+        "411002": [23, 24],    # Ganj Peth / Budhwar Peth: Raviwar Peth + Kasba
+        "411003": [8],         # Khadki / Kirkee: Aundh-Bopodi
+        "411004": [29],        # Deccan Gymkhana / Erandwane
+        "411005": [12],        # Shivajinagar / Model Colony
+        "411006": [6],         # Yerawada / Gandhinagar
+        "411007": [7, 8],      # Aundh / Bopodi: Gokhale Nagar + Aundh-Bopodi
+        "411008": [9, 10],     # Baner / Balewadi: Sus-Baner + Bavdhan
+        "411009": [27, 36],    # Navi Peth / Parvati / Padmavati
+        "411011": [24, 25],    # Kasba Peth / Somwar Peth
+        "411012": [8],         # Dapodi: Aundh-Bopodi
+        "411013": [16, 17],    # Hadapsar / Fatimanagar / Ramtekdi
+        "411014": [3, 5],      # Viman Nagar: Lohegaon + Kalyani Nagar
+        "411015": [1, 2],      # Dhanori: Kalas-Dhanori + Phulenagar
+        "411016": [7, 12],     # Wakdewadi / Gokhale Nagar
+        "411019": [2],         # Nagpur Chawl / Dhanori (part)
+        "411020": [8],         # Range Hills / Telco Colony: Aundh-Bopodi
+        "411021": [9, 10],     # Baner Gaon / Sus Road: Sus-Baner + Bavdhan
+        "411023": [33],        # Khadakwasla / NDA: Shivne-Khadakwasla
+        "411024": [33],        # NDA area: Shivne-Khadakwasla
+        "411025": [4],         # Wagholi / Kesnand: Kharadi-Wagholi
+        "411027": [8],         # Aundh Camp: Aundh-Bopodi
+        "411028": [16],        # Hadapsar / Phursungi / Magarpatta
+        "411030": [25, 27],    # Sadashiv Peth / Shaniwar Peth / Navi Peth
+        "411032": [3],         # Lohegaon / Airport: Viman Nagar-Lohegaon
+        "411036": [14],        # Mundhwa / Ghorpadi / Koregaon Park
+        "411037": [20, 21],    # Bibvewadi / Salisbury Park
+        "411038": [10, 31],    # Kothrud / Erandwane: Bavdhan + Mayur Colony-Kothrud
+        "411040": [17, 18],    # Wanawadi / Salunkhe Vihar / Ramtekdi
+        "411041": [34],        # Dhayari / Vadgaon Budruk / Nanded City
+        "411042": [25, 26],    # Ganj Peth / Guruwar Peth
+        "411043": [37],        # Dhankawadi / Katraj Dairy
+        "411045": [9],         # Pashan / Baner Gaon: Sus-Baner-Pashan
+        "411046": [38],        # Ambegaon Budruk / Lower Katraj
+        "411047": [3],         # Lohegaon military: Viman Nagar-Lohegaon
+        "411048": [19, 40],    # Kondhwa Khurd + Kondhwa Budruk
+        "411051": [30],        # Karve Nagar / Hingne Home Colony
+        "411052": [30],        # Karve Nagar / Erandwane (part)
+        "411057": [9],         # Sus / Hinjewadi boundary: Sus-Baner-Pashan
+        "411058": [10, 32],    # Warje / Bhusari Colony / Popular Nagar
+        "411060": [41],        # Mohammadwadi / Undri / Pisoli
+        "411067": [1],         # Kalas area: Kalas-Dhanori
     }
 
     count = 0
