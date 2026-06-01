@@ -30,26 +30,31 @@ export default function ComplaintListPage({ user }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const group = searchParams.get("status_group") || "total";
   const [complaints, setComplaints] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (user) fetchData(); }, [user, group]);
+  useEffect(() => { if (user) fetchData(1); }, [user, group]);
 
-  async function fetchData() {
+  async function fetchData(p = page) {
     setLoading(true);
     try {
       const params = group !== "total" ? { status_group: group } : {};
       let res;
       if (user.role === "corporator")     res = await dashboardAPI.corporatorComplaints(params);
-      else if (user.role === "admin")     res = await adminAPI.complaints(params);
+      else if (user.role === "admin")     res = await adminAPI.complaints({ ...params, page: p });
       else                                res = await complaintAPI.list(params);
       setComplaints(res.data.complaints || []);
+      if (res.data.total != null) { setTotal(res.data.total); setPages(res.data.pages || 1); setPage(p); }
     } catch { setComplaints([]); }
     setLoading(false);
   }
 
-  function setGroup(g) { setSearchParams(g === "total" ? {} : { status_group: g }); }
+  function setGroup(g) { setPage(1); setSearchParams(g === "total" ? {} : { status_group: g }); }
 
   const backPath = user?.role === "corporator" ? "/corporator" : user?.role === "admin" ? "/admin" : "/";
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="page-content">
@@ -62,7 +67,7 @@ export default function ComplaintListPage({ user }) {
         <PageHeader
           title={t("complaint.list_title")}
           subtitle={t("complaint.list_subtitle", {
-            count: complaints.length,
+            count: isAdmin ? total : complaints.length,
             group: t(TABS.find(tb => tb.key === group)?.labelKey || "complaint.tab_all"),
           })}
           action={user?.role === "citizen" ? (
@@ -156,6 +161,27 @@ export default function ComplaintListPage({ user }) {
           </div>
         )}
       </div>
+
+      {/* Pagination — admin only */}
+      {isAdmin && pages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-500">
+            Page {page} of {pages} · {total} complaints
+          </p>
+          <div className="flex gap-2">
+            <button onClick={() => fetchData(page - 1)} disabled={page <= 1}
+              className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600
+                         hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              ← Prev
+            </button>
+            <button onClick={() => fetchData(page + 1)} disabled={page >= pages}
+              className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600
+                         hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

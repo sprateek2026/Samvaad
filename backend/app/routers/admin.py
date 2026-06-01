@@ -103,34 +103,40 @@ def all_complaints(
     status: str | None = None,
     status_group: str | None = None,
     page: int = 1,
-    limit: int = 20,
+    limit: int = 25,
     db: sqlite3.Connection = Depends(get_db),
     token_data: dict = Depends(verify_firebase_token)
 ):
     require_admin(db, token_data)
 
-    query = """SELECT c.*, u.full_name as citizen_name,
-                      w.ward_number, w.ward_name
-               FROM complaints c
-               JOIN users u ON c.citizen_id = u.id
-               JOIN wards w ON c.ward_id = w.id
-               WHERE 1=1"""
+    base = """FROM complaints c
+              JOIN users u ON c.citizen_id = u.id
+              LEFT JOIN wards w ON c.ward_id = w.id
+              WHERE 1=1"""
     params = []
     if ward_id:
-        query += " AND c.ward_id = ?"
+        base += " AND c.ward_id = ?"
         params.append(ward_id)
     if status:
-        query += " AND c.status = ?"
+        base += " AND c.status = ?"
         params.append(status)
     elif status_group == "pending":
-        query += " AND c.status IN ('submitted','under_review','in_progress')"
+        base += " AND c.status IN ('submitted','under_review','assigned','in_progress','escalated','reopened')"
     elif status_group == "resolved":
-        query += " AND c.status IN ('resolved')"
-    query += " ORDER BY c.created_at DESC LIMIT ? OFFSET ?"
-    params.extend([limit, (page - 1) * limit])
+        base += " AND c.status IN ('resolved','closed')"
 
-    rows = db.execute(query, params).fetchall()
-    return {"complaints": [dict(r) for r in rows], "page": page}
+    total = db.execute(f"SELECT COUNT(*) {base}", params).fetchone()[0]
+    rows = db.execute(
+        f"SELECT c.*, u.full_name as citizen_name, w.ward_number, w.ward_name {base}"
+        f" ORDER BY c.created_at DESC LIMIT ? OFFSET ?",
+        params + [limit, (page - 1) * limit]
+    ).fetchall()
+    return {
+        "complaints": [dict(r) for r in rows],
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+    }
 
 
 @router.get("/analytics/overview")

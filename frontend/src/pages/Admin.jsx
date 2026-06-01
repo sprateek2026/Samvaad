@@ -224,7 +224,13 @@ function DashboardTab() {
       </div>
 
       <div className="ds-card p-6">
-        <h3 className="font-semibold text-gray-700 mb-4">{t("dashboard.recent_complaints")}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-gray-700">{t("dashboard.recent_complaints")} <span className="text-xs font-normal text-gray-400">(latest 20)</span></h3>
+          <button onClick={() => navigate("/complaints")}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+            {t("dashboard.view_all")} ({data.total}) →
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -238,12 +244,14 @@ function DashboardTab() {
             </thead>
             <tbody>
               {data.recent_complaints?.map(c => (
-                <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2 pr-3 font-mono text-xs">{c.complaint_id}</td>
-                  <td className="py-2 pr-3">{c.title?.substring(0, 50)}</td>
+                <tr key={c.id}
+                  onClick={() => navigate(`/complaint/${c.complaint_id}`)}
+                  className="border-b border-gray-100 hover:bg-indigo-50/40 cursor-pointer transition-colors">
+                  <td className="py-2 pr-3 font-mono text-xs text-gray-500">{c.complaint_id}</td>
+                  <td className="py-2 pr-3 max-w-xs truncate font-medium text-gray-800">{c.title?.substring(0, 50)}</td>
                   <td className="py-2 pr-3"><StatusBadge status={c.status} /></td>
-                  <td className="py-2 pr-3">{c.citizen_name}</td>
-                  <td className="py-2 text-gray-500">{daysAgo(c.created_at)}d</td>
+                  <td className="py-2 pr-3 text-gray-500 text-xs">{c.citizen_name}</td>
+                  <td className="py-2 text-gray-500 text-xs">{daysAgo(c.created_at)}d ago</td>
                 </tr>
               ))}
               {(!data.recent_complaints || data.recent_complaints.length === 0) && (
