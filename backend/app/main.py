@@ -21,7 +21,7 @@ _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 # ALLOWED_ORIGIN_REGEX if the frontend ever moves off *.vercel.app.
 _origin_regex = os.environ.get(
     "ALLOWED_ORIGIN_REGEX",
-    r"https://samvaad[\w-]*\.vercel\.app"
+    r"https://samvaad[\w-]*\.vercel\.app|http://localhost:\d+"
 )
 
 app.add_middleware(

@@ -51,21 +51,31 @@ function DashboardTab() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [loadError, setLoadError] = useState("");
   const [wards, setWards] = useState([]);
   const [wardFilter, setWardFilter] = useState("");
   const mapContainer = useRef(null);
   const map = useRef(null);
   const STATUS_PIE_COLORS = { submitted: "#f59e0b", under_review: "#3b82f6", in_progress: "#f97316", resolved: "#22c55e" };
 
+  function loadDashboard() {
+    setLoadError("");
+    setData(null);
+    adminAPI.dashboard(wardFilter ? { ward_id: parseInt(wardFilter) } : {})
+      .then(r => setData(r.data))
+      .catch(err => {
+        const status = err?.response?.status;
+        const detail = err?.response?.data?.detail || err?.message || "Unknown error";
+        setLoadError(`Failed to load dashboard (${status || "network error"}): ${detail}`);
+        console.error("[AdminDashboard]", err);
+      });
+  }
+
   useEffect(() => {
     gisAPI.wards().then(r => setWards(r.data.wards)).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    adminAPI.dashboard(wardFilter ? { ward_id: parseInt(wardFilter) } : {})
-      .then(r => setData(r.data))
-      .catch(() => {});
-  }, [wardFilter]);
+  useEffect(() => { loadDashboard(); }, [wardFilter]);
 
   useEffect(() => {
     if (!map.current && mapContainer.current && data) {
@@ -95,7 +105,26 @@ function DashboardTab() {
     });
   }, [data]);
 
-  if (!data) return <div className="text-center py-12 text-gray-400">{t("dashboard.loading")}</div>;
+  if (!data) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      {loadError ? (
+        <>
+          <div className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 rounded-xl px-5 py-3 max-w-lg text-center">
+            {loadError}
+          </div>
+          <button onClick={loadDashboard}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+            Retry
+          </button>
+        </>
+      ) : (
+        <div className="flex flex-col items-center gap-3 text-gray-400">
+          <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+          <span className="text-sm">{t("dashboard.loading")}</span>
+        </div>
+      )}
+    </div>
+  );
 
   const pieData = (data.by_status || [])
     .filter(s => ["submitted","under_review","in_progress","resolved"].includes(s.status))

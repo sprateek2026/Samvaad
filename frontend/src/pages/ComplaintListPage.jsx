@@ -47,7 +47,7 @@ export default function ComplaintListPage({ user }) {
       else                                res = await complaintAPI.list(params);
       setComplaints(res.data.complaints || []);
       if (res.data.total != null) { setTotal(res.data.total); setPages(res.data.pages || 1); setPage(p); }
-    } catch { setComplaints([]); }
+    } catch (err) { console.error("[ComplaintList]", err?.response?.data || err?.message || err); setComplaints([]); }
     setLoading(false);
   }
 
