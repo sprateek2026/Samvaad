@@ -507,10 +507,43 @@ def seed_users(conn):
     print(f"Seeded {count} user(s).")
 
 
+def _backfill_complaint_coords(conn):
+    """Update any existing seeded complaints that have NULL coordinates with known Pune coords."""
+    coords_by_id = {
+        "PMC-20260515-0001": (18.5195, 73.8553), "PMC-20260516-0002": (18.5158, 73.8630),
+        "PMC-20260517-0003": (18.5308, 73.8475), "PMC-20260518-0004": (18.5210, 73.8600),
+        "PMC-20260519-0005": (18.5590, 73.7876), "PMC-20260520-0006": (18.5180, 73.8553),
+        "PMC-20260520-0007": (18.5074, 73.8477), "PMC-20260521-0008": (18.5308, 73.8475),
+        "PMC-20260521-0009": (18.4980, 73.8280), "PMC-20260522-0010": (18.4973, 73.8209),
+        "PMC-20260522-0011": (18.5143, 73.8580), "PMC-20260523-0012": (18.4996, 73.8358),
+        "PMC-20260523-0013": (18.5282, 73.8431), "PMC-20260524-0014": (18.5590, 73.8076),
+        "PMC-20260524-0015": (18.5238, 73.8475), "PMC-20260525-0016": (18.5504, 73.8727),
+        "PMC-20260525-0017": (18.5195, 73.8605), "PMC-20260526-0018": (18.5143, 73.8490),
+        "PMC-20260526-0019": (18.6298, 73.7997), "PMC-20260527-0020": (18.5018, 73.9260),
+        "PMC-20260527-0021": (18.5250, 73.8650), "PMC-20260527-0022": (18.5679, 73.9143),
+        "PMC-20260528-0023": (18.5093, 73.9308), "PMC-20260528-0024": (18.4528, 73.8601),
+        "PMC-20260528-0025": (18.5188, 73.8559), "PMC-20260529-0026": (18.5509, 73.9489),
+        "PMC-20260529-0027": (18.5988, 73.7616), "PMC-20260530-0028": (18.4860, 73.8267),
+        "PMC-20260530-0029": (18.5074, 73.8053), "PMC-20260531-0030": (18.5204, 73.8567),
+    }
+    updated = 0
+    for cid, (lat, lng) in coords_by_id.items():
+        cur = conn.execute(
+            "UPDATE complaints SET location_lat=?, location_lng=? WHERE complaint_id=? AND location_lat IS NULL",
+            (lat, lng, cid)
+        )
+        updated += cur.rowcount
+    if updated:
+        conn.commit()
+        print(f"Backfilled coordinates for {updated} complaint(s).")
+
+
 def seed_complaints(conn):
     existing = conn.execute("SELECT COUNT(*) FROM complaints").fetchone()[0]
     if existing > 0:
-        print(f"Complaints already seeded ({existing} found), skipping.")
+        # Backfill lat/lng for any seeded complaints that have no location
+        _backfill_complaint_coords(conn)
+        print(f"Complaints already seeded ({existing} found), skipping insert.")
         return
 
     citizen1 = conn.execute("SELECT id FROM users WHERE firebase_uid = 'dev-user-001'").fetchone()
@@ -521,55 +554,57 @@ def seed_complaints(conn):
     cid1 = citizen1[0]
     cid2 = citizen2[0]
 
-    # Pune ward IDs 1..10 used for variety; ward_id is nullable so None is safe too
+    # (complaint_id, citizen_id, category_id, title, description, ward_id, status, priority, days_ago, lat, lng)
+    # Coordinates are real Pune locations spread across the city
     sample = [
-        # (complaint_id, citizen_id, category_id, title, description, ward_id, status, priority, days_ago)
-        ("PMC-20260515-0001", cid1, 1,  "Water supply interrupted for 3 days", "No water supply since Monday in our area. Multiple houses affected.", 3,  "submitted",    "high",   17),
-        ("PMC-20260516-0002", cid1, 3,  "Pothole on main road near school",    "Large pothole near St. Xavier's School causing accidents.", 5,  "in_progress",  "high",   16),
-        ("PMC-20260517-0003", cid1, 2,  "Garbage not collected for a week",    "Waste bins overflowing. Garbage truck has not visited in 7 days.", 7,  "under_review", "medium", 15),
-        ("PMC-20260518-0004", cid1, 4,  "Streetlight not working",             "3 streetlights on Paud Road are out since last week.", 2,  "assigned",     "medium", 14),
-        ("PMC-20260519-0005", cid2, 11, "Burning of waste near society",       "Open burning of plastic waste behind Baner society daily.", 8,  "in_progress",  "urgent", 13),
-        ("PMC-20260520-0006", cid2, 9,  "No bus service on route 147",         "PMPML route 147 has not operated for 2 weeks.", 1,  "resolved",     "medium", 12),
-        ("PMC-20260520-0007", cid1, 5,  "Mosquito menace after rains",         "Standing water near park breeding mosquitoes. Dengue risk.", 6,  "resolved",     "high",   12),
-        ("PMC-20260521-0008", cid2, 3,  "Road cave-in near bus stop",          "Road surface has sunk near Shivajinagar bus stop.", 4,  "in_progress",  "urgent", 11),
-        ("PMC-20260521-0009", cid1, 6,  "Park benches broken",                 "All benches in Saras Baug garden are broken or missing.", 9,  "submitted",    "low",    11),
-        ("PMC-20260522-0010", cid2, 7,  "Dispensary closed during hours",      "Ward 4 dispensary found closed at 11am on a working day.", 10, "under_review", "high",   10),
-        ("PMC-20260522-0011", cid1, 12, "Illegal construction without permit",  "5-floor building being constructed without any visible permit.", 3,  "under_review", "high",   10),
-        ("PMC-20260523-0012", cid2, 2,  "Open drain overflowing",              "Drain near Karve Road is blocked and overflowing onto street.", 5,  "in_progress",  "urgent", 9),
-        ("PMC-20260523-0013", cid1, 4,  "Traffic signal malfunction",          "Signal at FC Road junction showing green both ways.", 2,  "resolved",     "urgent", 9),
-        ("PMC-20260524-0014", cid2, 1,  "Contaminated water supply",           "Yellow-coloured water coming from taps. Foul smell reported.", 7,  "in_progress",  "urgent", 8),
-        ("PMC-20260524-0015", cid1, 13, "Pension not received for 2 months",   "Senior citizen pension not credited despite repeated applications.", 1,  "submitted",    "high",   8),
-        ("PMC-20260525-0016", cid2, 8,  "School building has cracks",          "Cracks visible in walls of PMC school on Nagar Road.", 6,  "under_review", "high",   7),
-        ("PMC-20260525-0017", cid1, 10, "Street harassment near market",       "Repeated harassment incidents near Mandai market at night.", 8,  "assigned",     "high",   7),
-        ("PMC-20260526-0018", cid2, 3,  "Footpath encroached by vendor",       "Vendors occupying entire footpath forcing pedestrians on road.", 4,  "submitted",    "medium", 6),
-        ("PMC-20260526-0019", cid1, 11, "Factory releasing fumes at night",    "Chemical smell from factory near residential area after 10pm.", 9,  "in_progress",  "high",   6),
-        ("PMC-20260527-0020", cid2, 5,  "Dead animals on road",                "Carcasses on road near vegetable market. Health hazard.", 10, "resolved",     "urgent", 5),
-        ("PMC-20260527-0021", cid1, 2,  "Dustbin overflowing daily",           "Dustbin at bus stop never emptied. Waste spills onto road.", 3,  "closed",       "low",    5),
-        ("PMC-20260527-0022", cid2, 9,  "Bus route diverted without notice",   "Route 56 diverted with no intimation to commuters.", 5,  "closed",       "low",    5),
-        ("PMC-20260528-0023", cid1, 6,  "Joggers park flooded",                "Joggers park near Boat Club completely waterlogged.", 7,  "submitted",    "medium", 4),
-        ("PMC-20260528-0024", cid2, 7,  "No doctor at urban health centre",    "UHC on Sinhagad Road has no doctor on duty for 3 days.", 2,  "in_progress",  "urgent", 4),
-        ("PMC-20260528-0025", cid1, 17, "Bribe demanded for building permit",  "PMC official demanded Rs 5000 bribe for NOC.", 1,  "under_review", "urgent", 4),
-        ("PMC-20260529-0026", cid2, 1,  "Water meter damaged by contractor",   "Road work contractor broke our water meter and left.", 6,  "assigned",     "medium", 3),
-        ("PMC-20260529-0027", cid1, 4,  "Transformer sparking",                "Transformer near society gate sparking dangerously at night.", 8,  "in_progress",  "urgent", 3),
-        ("PMC-20260530-0028", cid2, 3,  "Speed bumps removed without reason",  "Speed bumps in school zone removed, now speeding increased.", 4,  "submitted",    "high",   2),
-        ("PMC-20260530-0029", cid1, 12, "Demolition debris blocking road",     "Construction rubble dumped on road by builder for 2 weeks.", 9,  "under_review", "medium", 2),
-        ("PMC-20260531-0030", cid2, 18, "Smart bin not working",               "Smart bin sensor broken, no alerts being sent to PMC.", 10, "submitted",    "low",    1),
+        ("PMC-20260515-0001", cid1, 1,  "Water supply interrupted for 3 days", "No water supply since Monday in our area. Multiple houses affected.", 3,  "submitted",    "high",   17, 18.5195, 73.8553),
+        ("PMC-20260516-0002", cid1, 3,  "Pothole on main road near school",    "Large pothole near St. Xavier's School causing accidents.", 5,  "in_progress",  "high",   16, 18.5158, 73.8630),
+        ("PMC-20260517-0003", cid1, 2,  "Garbage not collected for a week",    "Waste bins overflowing. Garbage truck has not visited in 7 days.", 7,  "under_review", "medium", 15, 18.5308, 73.8475),
+        ("PMC-20260518-0004", cid1, 4,  "Streetlight not working",             "3 streetlights on Paud Road are out since last week.", 2,  "assigned",     "medium", 14, 18.5210, 73.8600),
+        ("PMC-20260519-0005", cid2, 11, "Burning of waste near society",       "Open burning of plastic waste behind Baner society daily.", 8,  "in_progress",  "urgent", 13, 18.5590, 73.7876),
+        ("PMC-20260520-0006", cid2, 9,  "No bus service on route 147",         "PMPML route 147 has not operated for 2 weeks.", 1,  "resolved",     "medium", 12, 18.5180, 73.8553),
+        ("PMC-20260520-0007", cid1, 5,  "Mosquito menace after rains",         "Standing water near park breeding mosquitoes. Dengue risk.", 6,  "resolved",     "high",   12, 18.5074, 73.8477),
+        ("PMC-20260521-0008", cid2, 3,  "Road cave-in near bus stop",          "Road surface has sunk near Shivajinagar bus stop.", 4,  "in_progress",  "urgent", 11, 18.5308, 73.8475),
+        ("PMC-20260521-0009", cid1, 6,  "Park benches broken",                 "All benches in Saras Baug garden are broken or missing.", 9,  "submitted",    "low",    11, 18.4980, 73.8280),
+        ("PMC-20260522-0010", cid2, 7,  "Dispensary closed during hours",      "Ward 4 dispensary found closed at 11am on a working day.", 10, "under_review", "high",   10, 18.4973, 73.8209),
+        ("PMC-20260522-0011", cid1, 12, "Illegal construction without permit",  "5-floor building being constructed without any visible permit.", 3,  "under_review", "high",   10, 18.5143, 73.8580),
+        ("PMC-20260523-0012", cid2, 2,  "Open drain overflowing",              "Drain near Karve Road is blocked and overflowing onto street.", 5,  "in_progress",  "urgent", 9,  18.4996, 73.8358),
+        ("PMC-20260523-0013", cid1, 4,  "Traffic signal malfunction",          "Signal at FC Road junction showing green both ways.", 2,  "resolved",     "urgent", 9,  18.5282, 73.8431),
+        ("PMC-20260524-0014", cid2, 1,  "Contaminated water supply",           "Yellow-coloured water coming from taps. Foul smell reported.", 7,  "in_progress",  "urgent", 8,  18.5590, 73.8076),
+        ("PMC-20260524-0015", cid1, 13, "Pension not received for 2 months",   "Senior citizen pension not credited despite repeated applications.", 1,  "submitted",    "high",   8,  18.5238, 73.8475),
+        ("PMC-20260525-0016", cid2, 8,  "School building has cracks",          "Cracks visible in walls of PMC school on Nagar Road.", 6,  "under_review", "high",   7,  18.5504, 73.8727),
+        ("PMC-20260525-0017", cid1, 10, "Street harassment near market",       "Repeated harassment incidents near Mandai market at night.", 8,  "assigned",     "high",   7,  18.5195, 73.8605),
+        ("PMC-20260526-0018", cid2, 3,  "Footpath encroached by vendor",       "Vendors occupying entire footpath forcing pedestrians on road.", 4,  "submitted",    "medium", 6,  18.5143, 73.8490),
+        ("PMC-20260526-0019", cid1, 11, "Factory releasing fumes at night",    "Chemical smell from factory near residential area after 10pm.", 9,  "in_progress",  "high",   6,  18.6298, 73.7997),
+        ("PMC-20260527-0020", cid2, 5,  "Dead animals on road",                "Carcasses on road near vegetable market. Health hazard.", 10, "resolved",     "urgent", 5,  18.5018, 73.9260),
+        ("PMC-20260527-0021", cid1, 2,  "Dustbin overflowing daily",           "Dustbin at bus stop never emptied. Waste spills onto road.", 3,  "closed",       "low",    5,  18.5250, 73.8650),
+        ("PMC-20260527-0022", cid2, 9,  "Bus route diverted without notice",   "Route 56 diverted with no intimation to commuters.", 5,  "closed",       "low",    5,  18.5679, 73.9143),
+        ("PMC-20260528-0023", cid1, 6,  "Joggers park flooded",                "Joggers park near Boat Club completely waterlogged.", 7,  "submitted",    "medium", 4,  18.5093, 73.9308),
+        ("PMC-20260528-0024", cid2, 7,  "No doctor at urban health centre",    "UHC on Sinhagad Road has no doctor on duty for 3 days.", 2,  "in_progress",  "urgent", 4,  18.4528, 73.8601),
+        ("PMC-20260528-0025", cid1, 17, "Bribe demanded for building permit",  "PMC official demanded Rs 5000 bribe for NOC.", 1,  "under_review", "urgent", 4,  18.5188, 73.8559),
+        ("PMC-20260529-0026", cid2, 1,  "Water meter damaged by contractor",   "Road work contractor broke our water meter and left.", 6,  "assigned",     "medium", 3,  18.5509, 73.9489),
+        ("PMC-20260529-0027", cid1, 4,  "Transformer sparking",                "Transformer near society gate sparking dangerously at night.", 8,  "in_progress",  "urgent", 3,  18.5988, 73.7616),
+        ("PMC-20260530-0028", cid2, 3,  "Speed bumps removed without reason",  "Speed bumps in school zone removed, now speeding increased.", 4,  "submitted",    "high",   2,  18.4860, 73.8267),
+        ("PMC-20260530-0029", cid1, 12, "Demolition debris blocking road",     "Construction rubble dumped on road by builder for 2 weeks.", 9,  "under_review", "medium", 2,  18.5074, 73.8053),
+        ("PMC-20260531-0030", cid2, 18, "Smart bin not working",               "Smart bin sensor broken, no alerts being sent to PMC.", 10, "submitted",    "low",    1,  18.5204, 73.8567),
     ]
 
     from datetime import datetime, timedelta
     now = datetime.utcnow()
     count = 0
     for row in sample:
-        cid_str, citizen_id, cat_id, title, desc, ward_id, status, priority, days_ago = row
+        cid_str, citizen_id, cat_id, title, desc, ward_id, status, priority, days_ago, lat, lng = row
         created = (now - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
         resolved_at = (now - timedelta(days=max(0, days_ago - 2))).strftime("%Y-%m-%d %H:%M:%S") if status in ("resolved", "closed") else None
         sla = (now - timedelta(days=days_ago) + timedelta(hours=72)).strftime("%Y-%m-%d %H:%M:%S")
         conn.execute(
             """INSERT OR IGNORE INTO complaints
                (complaint_id, citizen_id, category_id, title, description,
-                ward_id, status, priority, sla_deadline, resolved_at, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (cid_str, citizen_id, cat_id, title, desc, ward_id, status, priority, sla, resolved_at, created, created)
+                ward_id, status, priority, sla_deadline, resolved_at,
+                location_lat, location_lng, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (cid_str, citizen_id, cat_id, title, desc, ward_id, status, priority, sla, resolved_at,
+             lat, lng, created, created)
         )
         count += 1
     conn.commit()
