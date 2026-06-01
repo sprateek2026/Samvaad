@@ -52,18 +52,28 @@ function DashboardTab() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const [wards, setWards] = useState([]);
   const [wardFilter, setWardFilter] = useState("");
   const mapContainer = useRef(null);
   const map = useRef(null);
   const STATUS_PIE_COLORS = { submitted: "#f59e0b", under_review: "#3b82f6", in_progress: "#f97316", resolved: "#22c55e" };
 
-  function loadDashboard() {
+  function loadDashboard(isRetry = false) {
     setLoadError("");
     setData(null);
+    if (isRetry) setRetrying(true);
     adminAPI.dashboard(wardFilter ? { ward_id: parseInt(wardFilter) } : {})
-      .then(r => setData(r.data))
+      .then(r => { setData(r.data); setRetrying(false); })
       .catch(err => {
+        const isNetwork = !err?.response;
+        if (isNetwork && !isRetry) {
+          // Backend cold start — retry once after 8s
+          setRetrying(true);
+          setTimeout(() => loadDashboard(true), 8000);
+          return;
+        }
+        setRetrying(false);
         const status = err?.response?.status;
         const detail = err?.response?.data?.detail || err?.message || "Unknown error";
         setLoadError(`Failed to load dashboard (${status || "network error"}): ${detail}`);
@@ -112,7 +122,7 @@ function DashboardTab() {
           <div className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 rounded-xl px-5 py-3 max-w-lg text-center">
             {loadError}
           </div>
-          <button onClick={loadDashboard}
+          <button onClick={() => loadDashboard()}
             className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
             Retry
           </button>
@@ -120,7 +130,7 @@ function DashboardTab() {
       ) : (
         <div className="flex flex-col items-center gap-3 text-gray-400">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-          <span className="text-sm">{t("dashboard.loading")}</span>
+          <span className="text-sm">{retrying ? "Backend is waking up, retrying…" : t("dashboard.loading")}</span>
         </div>
       )}
     </div>
