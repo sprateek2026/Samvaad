@@ -468,7 +468,7 @@ def seed_pincode_wards(conn: sqlite3.Connection):
         "411051": [30],        # Karve Nagar / Hingne Home Colony
         "411052": [30],        # Karve Nagar / Erandwane (part)
         "411057": [9],         # Sus / Hinjewadi boundary: Sus-Baner-Pashan
-        "411058": [10, 32],    # Warje / Bhusari Colony / Popular Nagar
+        "411058": [32],        # Warje / Popular Nagar / Bhusari Colony (ward 32 covers all of 411058)
         "411060": [41],        # Mohammadwadi / Undri / Pisoli
         "411067": [1],         # Kalas area: Kalas-Dhanori
     }

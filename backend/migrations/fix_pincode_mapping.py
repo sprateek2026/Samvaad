@@ -88,7 +88,7 @@ CORRECT_MAPPING = {
     # 411057 = Sus / near Hinjewadi boundary
     "411057": [(9, None)],
     # 411058 = Warje / Popular Nagar / Bhusari Colony
-    "411058": [(31, "Popular Nagar"), (10, "Bhusari Colony")],
+    "411058": [(31, "Warje / Bhusari Colony")],
     # 411060 = Mohammadwadi / Undri / Pisoli
     "411060": [(40, None)],
     # 411067 = Kalas area
