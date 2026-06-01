@@ -53,7 +53,7 @@ export default function Layout({ children, user, onLogout }) {
 
   const navLinks = [
     { to: '/',          label: t('nav.dashboard'),  icon: LayoutDashboard, show: true },
-    { to: '/raise',     label: t('nav.raise_issue'), icon: FilePlus2, show: user.role === 'citizen' },
+    { to: '/raise',     label: t('dashboard.raise_complaint'), icon: FilePlus2, show: user.role === 'citizen' },
     { to: '/complaints',label: t('nav.my_complaints'), icon: FileSearch, show: user.role === 'citizen' },
   ];
 
