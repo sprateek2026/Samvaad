@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { dashboardAPI, complaintAPI, authAPI, gisAPI } from "../api";
+import { dashboardAPI, complaintAPI, authAPI, gisAPI, suggestionAPI } from "../api";
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import {
   FileText, Clock, CheckCircle2, Star, FilePlus2,
-  Search, MapPin, ArrowRight, TrendingUp, Pencil,
+  Search, MapPin, ArrowRight, TrendingUp, Pencil, Lightbulb,
 } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -47,6 +47,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [complaints, setComplaints] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [wardDrawer, setWardDrawer] = useState(false);
@@ -86,7 +87,7 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
     finally { setWardSaving(false); }
   }
 
-  useEffect(() => { if (user) { fetchStats(); fetchComplaints(); } }, [user]);
+  useEffect(() => { if (user) { fetchStats(); fetchComplaints(); fetchSuggestions(); } }, [user]);
 
   async function fetchStats() {
     try { const res = await dashboardAPI.citizenStats(); setStats(res.data); } catch {}
@@ -94,6 +95,9 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
   }
   async function fetchComplaints() {
     try { const res = await complaintAPI.list(); setComplaints(res.data.complaints || []); } catch {}
+  }
+  async function fetchSuggestions() {
+    try { const res = await suggestionAPI.list(); setSuggestions(res.data.suggestions || []); } catch {}
   }
 
   const byCategoryData = stats
@@ -310,6 +314,55 @@ export default function CitizenDashboard({ user, onUserUpdate }) {
                   <StatusBadge status={c.status} size="sm" />
                   <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500 flex-shrink-0 transition-colors" />
                 </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── My Suggestions ── */}
+      <div className="ds-card overflow-hidden mt-5">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <Lightbulb className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-700">{t("dashboard.recent_suggestions")}</h3>
+          </div>
+          <button onClick={() => navigate("/raise")}
+            className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 bg-transparent border-none cursor-pointer">
+            {t("complaint.submit_suggestion")} <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {suggestions.length === 0 ? (
+          <div className="flex flex-col items-center py-12 gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center">
+              <Lightbulb className="w-5 h-5 text-amber-400" />
+            </div>
+            <p className="text-sm text-gray-500">{t("dashboard.no_suggestions")}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {suggestions.slice(0, 10).map((s) => {
+              const ageDays = Math.floor((Date.now() - new Date(s.created_at)) / 86400000);
+              return (
+                <div key={s.id} className="flex items-start gap-4 px-5 py-3.5">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0 bg-amber-400 mt-1.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{s.title}</p>
+                    {s.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{s.description}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      <span className="font-mono">#{s.id}</span>
+                      {" · "}{ageDays === 0 ? t("common.today") : t("common.days_ago", { count: ageDays })}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                    {s.status || "submitted"}
+                  </span>
+                </div>
               );
             })}
           </div>
