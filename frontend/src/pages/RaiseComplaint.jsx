@@ -228,6 +228,37 @@ export default function RaiseComplaint({ user }) {
 
   // ── Suggestion form ─────────────────────────────────────────────────────────
   if (mode === "suggestion") {
+    if (step === 4 && result) {
+      return (
+        <div className="max-w-2xl mx-auto py-8 px-4">
+          <div className="animate-scale-in text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto shadow-lg shadow-green-200">
+                <CheckCircle2 size={40} className="text-white" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-md mx-auto mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{t("complaint.suggestion_submitted")}</h2>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mt-3 mb-2">
+                💡 #{result.suggestion_id}
+              </div>
+              <p className="text-sm text-gray-500 mt-3">{t("complaint.thank_you")}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <button onClick={() => navigate("/")}
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                {t("complaint.go_to_dashboard")}
+              </button>
+              <button onClick={resetForm}
+                className="px-6 py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+                {t("complaint.submit_another")}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-2xl mx-auto py-8 px-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 animate-fade-in-up">
