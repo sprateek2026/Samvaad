@@ -756,11 +756,12 @@ function SuggestionsTab() {
   const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     suggestionAPI.list()
       .then(r => setSuggestions(r.data.suggestions))
-      .catch(() => {})
+      .catch(e => setError(e?.response?.data?.detail || "Failed to load suggestions"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -768,6 +769,14 @@ function SuggestionsTab() {
     return (
       <div className="flex justify-center py-20">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="ds-card p-12 text-center text-red-500">
+        <p className="text-sm">{error}</p>
       </div>
     );
   }

@@ -224,6 +224,57 @@ def _seed_complaints_if_empty():
         print(f"[seed] complaint seed skipped: {e}")
 
 
+def _seed_suggestions_if_empty():
+    """Seed sample suggestions on a fresh/existing DB where none exist yet.
+    Idempotent — skips when any suggestion exists."""
+    SAMPLE = [
+        ("Install more dustbins near FC Road",
+         "The footpath area near FC Road has very few dustbins. People end up littering. Requesting PMC to install at least 5 more bins along the 500m stretch.", 5),
+        ("Dedicated cycling lane on Baner Road",
+         "With rising traffic, a dedicated cycling track on Baner Road would encourage greener commute and reduce road accidents involving cyclists.", 8),
+        ("Solar lights for Saras Baug garden",
+         "The garden is dark after sunset. Installing solar-powered lights would make it safer for evening walkers and families.", 3),
+        ("Free Wi-Fi at PMC ward office",
+         "Most citizens visit the ward office for document work. Providing free Wi-Fi would help them fill online forms and reduce paper usage.", 6),
+        ("Rainwater harvesting mandate for new buildings",
+         "PMC should make rainwater harvesting mandatory for any new construction above 300 sqm to help recharge groundwater.", 10),
+        ("Community composting centre near vegetable market",
+         "A centralised composting unit near Mandai market would turn daily vegetable waste into useful manure for city gardens.", 4),
+        ("Digital display boards for bus arrival times",
+         "Adding real-time PMPML bus arrival display boards at major stops like Shivajinagar and Deccan would improve public transport usage.", 7),
+    ]
+    try:
+        from .database import get_connection
+        from datetime import datetime, timedelta
+        conn = get_connection()
+        try:
+            count = conn.execute("SELECT COUNT(*) FROM suggestions").fetchone()[0]
+            if count > 0:
+                return
+
+            citizen = conn.execute(
+                "SELECT id, ward_id FROM users WHERE firebase_uid IN ('dev-user-001','dev-user-9999999999') LIMIT 1"
+            ).fetchone()
+            if not citizen:
+                return
+
+            now = datetime.utcnow()
+            inserted = 0
+            for title, description, days_ago in SAMPLE:
+                created = (now - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
+                conn.execute(
+                    "INSERT OR IGNORE INTO suggestions (citizen_id, ward_id, title, description, created_at) VALUES (?, ?, ?, ?, ?)",
+                    (citizen["id"], citizen["ward_id"], title, description, created)
+                )
+                inserted += 1
+            conn.commit()
+            print(f"[seed] seeded {inserted} sample suggestion(s)")
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"[seed] suggestion seed skipped: {e}")
+
+
 def _backfill_complaint_coords():
     """One-time backfill: update seeded complaints that have NULL coords.
     Idempotent — UPDATE WHERE location_lat IS NULL touches nothing once done."""
@@ -270,6 +321,7 @@ def startup():
     _auto_seed_if_empty()
     _apply_pincode_corrections()
     _seed_complaints_if_empty()
+    _seed_suggestions_if_empty()
     _backfill_complaint_coords()
 
 

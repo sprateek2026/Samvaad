@@ -611,6 +611,44 @@ def seed_complaints(conn):
     print(f"Seeded {count} sample complaint(s).")
 
 
+def seed_suggestions(conn):
+    existing = conn.execute("SELECT COUNT(*) FROM suggestions").fetchone()[0]
+    if existing > 0:
+        print(f"Suggestions already seeded ({existing} found), skipping.")
+        return
+
+    citizen1 = conn.execute("SELECT id, ward_id FROM users WHERE firebase_uid = 'dev-user-001'").fetchone()
+    citizen2 = conn.execute("SELECT id, ward_id FROM users WHERE firebase_uid = 'dev-user-9999999999'").fetchone()
+    if not citizen1 or not citizen2:
+        print("Seed users not found, skipping suggestion seeding.")
+        return
+    cid1, ward1 = citizen1[0], citizen1[1]
+    cid2, ward2 = citizen2[0], citizen2[1]
+
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    sample = [
+        (cid1, ward1, "Install more dustbins near FC Road", "The footpath area near FC Road has very few dustbins. People end up littering. Requesting PMC to install at least 5 more bins along the 500m stretch.", 5),
+        (cid1, ward1, "Dedicated cycling lane on Baner Road", "With rising traffic, a dedicated cycling track on Baner Road would encourage greener commute and reduce road accidents involving cyclists.", 8),
+        (cid2, ward2, "Solar lights for Saras Baug garden", "The garden is dark after sunset. Installing solar-powered lights would make it safer for evening walkers and families.", 3),
+        (cid2, ward2, "Free Wi-Fi at PMC ward office", "Most citizens visit the ward office for document work. Providing free Wi-Fi would help them fill online forms and reduce paper usage.", 6),
+        (cid1, ward1, "Rainwater harvesting mandate for new buildings", "PMC should make rainwater harvesting mandatory for any new construction above 300 sqm. This will help recharge groundwater in Pune.", 10),
+        (cid2, ward2, "Community composting centre near vegetable market", "A centralised composting unit near Mandai market would turn daily vegetable waste into useful manure for city gardens.", 4),
+        (cid1, ward1, "Digital display boards for bus arrival times", "Adding real-time PMPML bus arrival display boards at major stops (like Shivajinagar, Deccan) would greatly improve public transport usage.", 7),
+    ]
+
+    count = 0
+    for i, (citizen_id, ward_id, title, description, days_ago) in enumerate(sample):
+        created = (now - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
+        conn.execute(
+            "INSERT OR IGNORE INTO suggestions (citizen_id, ward_id, title, description, created_at) VALUES (?, ?, ?, ?, ?)",
+            (citizen_id, ward_id, title, description, created)
+        )
+        count += 1
+    conn.commit()
+    print(f"Seeded {count} sample suggestion(s).")
+
+
 def main():
     geojson_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "backend", "data", "pune-2022-wards.geojson")
 
@@ -631,6 +669,7 @@ def main():
         seed_pincode_wards(conn)
         seed_users(conn)
         seed_complaints(conn)
+        seed_suggestions(conn)
         print("\n=== Database seeded successfully! ===")
     finally:
         conn.close()
