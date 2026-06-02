@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { dashboardAPI } from "../api";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MAP_STYLE } from "../mapStyle";
+import { MAP_STYLE, withStyleFallback } from "../mapStyle";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { FileText, Clock, CheckCircle2, Star, Shield, MessageSquare } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
@@ -28,31 +28,41 @@ export default function CorporatorDashboard({ user }) {
   }
 
   useEffect(() => {
+    return () => { map.current?.remove(); map.current = null; };
+  }, []);
+
+  useEffect(() => {
     if (!map.current && mapContainer.current && stats) {
-      map.current = new maplibregl.Map({
+      map.current = withStyleFallback(new maplibregl.Map({
         container: mapContainer.current,
         style: MAP_STYLE,
         center: [73.8567, 18.5204],
         zoom: 12
-      });
+      }));
       map.current.addControl(new maplibregl.NavigationControl(), "top-left");
     }
   }, [stats]);
 
   useEffect(() => {
     if (!map.current || !stats?.heatmap_data) return;
-    const markers = document.getElementsByClassName("maplibregl-marker");
-    while (markers.length > 0) markers[0].remove();
-
-    stats.heatmap_data.forEach(p => {
-      if (!p.lat || !p.lng) return;
-      const el = document.createElement("div");
-      el.className = "w-3 h-3 rounded-full border border-white shadow-sm";
-      el.style.backgroundColor = STATUS_COLORS[p.status] || "#6b7280";
-      new maplibregl.Marker({ element: el })
-        .setLngLat([p.lng, p.lat])
-        .addTo(map.current);
-    });
+    const m = map.current;
+    const points = stats.heatmap_data.filter(p => p.lat && p.lng);
+    const renderFresh = () => {
+      const markers = document.getElementsByClassName("maplibregl-marker");
+      while (markers.length > 0) markers[0].remove();
+      points.forEach(p => {
+        const el = document.createElement("div");
+        el.className = "w-3 h-3 rounded-full border border-white shadow-sm";
+        el.style.backgroundColor = STATUS_COLORS[p.status] || "#6b7280";
+        new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(m);
+      });
+    };
+    const renderIfMissing = () => {
+      if (document.getElementsByClassName("maplibregl-marker").length !== points.length) renderFresh();
+    };
+    renderFresh();
+    m.on("styledata", renderIfMissing);
+    return () => m.off("styledata", renderIfMissing);
   }, [stats]);
 
   if (!stats) return <div className="text-center py-12 text-gray-400">{t("dashboard.loading")}</div>;

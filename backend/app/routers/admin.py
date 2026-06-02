@@ -6,6 +6,7 @@ import uuid
 from ..database import get_db
 from ..middleware.auth import verify_firebase_token
 from ..config import UPLOAD_DIR
+from ..services.gis_service import build_heatmap
 
 router = APIRouter()
 
@@ -277,10 +278,10 @@ def admin_dashboard(
         params
     ).fetchall()
 
+    # Include every complaint in scope; complaints without explicit GPS coords
+    # fall back to their ward centroid below so the heatmap is never empty.
     heatmap = db.execute(
-        f"SELECT c.location_lat, c.location_lng, c.status FROM complaints c{base_where} AND c.location_lat IS NOT NULL"
-        if base_where else
-        "SELECT c.location_lat, c.location_lng, c.status FROM complaints c WHERE c.location_lat IS NOT NULL",
+        f"SELECT c.complaint_id, c.location_lat, c.location_lng, c.status, c.ward_id FROM complaints c{base_where}",
         params
     ).fetchall()
 
@@ -294,6 +295,8 @@ def admin_dashboard(
         params
     ).fetchall()
 
+    heatmap_data = build_heatmap(db, heatmap)
+
     return {
         "total": stats["total"] or 0,
         "pending": stats["pending"] or 0,
@@ -306,7 +309,7 @@ def admin_dashboard(
         "by_category": [{"name": r["name"], "count": r["count"]} for r in by_category],
         "by_status": [{"status": r["status"], "count": r["count"]} for r in by_status],
         "trend_last_30": [{"date": r["date"], "count": r["count"]} for r in trend],
-        "heatmap_data": [{"lat": r["location_lat"], "lng": r["location_lng"], "status": r["status"]} for r in heatmap],
+        "heatmap_data": heatmap_data,
         "recent_complaints": [dict(r) for r in recent]
     }
 

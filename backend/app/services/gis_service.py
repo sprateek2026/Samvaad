@@ -126,3 +126,64 @@ def _get_coordinates(geom: dict) -> list:
             coords.extend(poly)
         return coords
     return []
+
+
+_WARD_CENTROIDS: dict | None = None
+
+
+def ward_centroids(db: sqlite3.Connection) -> dict:
+    """Return {ward_id: (lat, lng)} approximated from each ward's polygon by
+    averaging its vertices. Used as a fallback location for complaints that have
+    no explicit GPS coordinates, so the heatmap has a point for every complaint
+    regardless of how it was seeded. Cached after first computation — ward
+    geometry is static for the life of the process."""
+    global _WARD_CENTROIDS
+    if _WARD_CENTROIDS is not None:
+        return _WARD_CENTROIDS
+
+    out: dict = {}
+    rows = db.execute("SELECT id, geometry FROM wards WHERE geometry IS NOT NULL").fetchall()
+    for row in rows:
+        try:
+            geom = json.loads(row["geometry"])
+            # _get_coordinates returns a list of linear rings; each ring is a
+            # list of [lng, lat] pairs. Average every vertex for an approximate centroid.
+            pts = [pt for ring in _get_coordinates(geom) for pt in ring]
+            if not pts:
+                continue
+            lng = sum(p[0] for p in pts) / len(pts)
+            lat = sum(p[1] for p in pts) / len(pts)
+            out[row["id"]] = (lat, lng)
+        except Exception:
+            continue
+
+    _WARD_CENTROIDS = out
+    return out
+
+
+def jitter_point(seed: str, lat: float, lng: float) -> tuple:
+    """Deterministically offset a point by up to ~±300 m based on `seed` (e.g. a
+    complaint id) so that multiple complaints sharing a ward centroid spread out
+    into a cluster instead of stacking on one pixel."""
+    h = abs(hash(seed))
+    dlat = ((h % 1000) / 1000.0 - 0.5) * 0.006
+    dlng = (((h // 1000) % 1000) / 1000.0 - 0.5) * 0.006
+    return lat + dlat, lng + dlng
+
+
+def build_heatmap(db: sqlite3.Connection, rows: list) -> list:
+    """Build heatmap points from complaint rows. Each row must expose
+    `location_lat`, `location_lng`, `status`, `ward_id`, and `complaint_id`.
+    Uses explicit GPS coords when present, otherwise falls back to the ward
+    centroid (jittered) so every complaint with a known ward gets a dot."""
+    centroids = ward_centroids(db)
+    points = []
+    for r in rows:
+        lat, lng = r["location_lat"], r["location_lng"]
+        if lat is None or lng is None:
+            c = centroids.get(r["ward_id"])
+            if not c:
+                continue  # ward has no geometry — nothing to place
+            lat, lng = jitter_point(r["complaint_id"], c[0], c[1])
+        points.append({"lat": lat, "lng": lng, "status": r["status"]})
+    return points

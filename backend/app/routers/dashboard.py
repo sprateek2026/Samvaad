@@ -3,6 +3,7 @@ from typing import Optional
 import sqlite3
 from ..database import get_db
 from ..middleware.auth import verify_firebase_token
+from ..services.gis_service import build_heatmap
 
 router = APIRouter()
 
@@ -121,8 +122,10 @@ def corporator_stats(
         (ward_id,)
     ).fetchall()
 
+    # Include every complaint in the ward; those without explicit GPS coords
+    # fall back to the ward centroid in build_heatmap so the heatmap is populated.
     heatmap = db.execute(
-        "SELECT location_lat, location_lng, status FROM complaints WHERE ward_id = ? AND location_lat IS NOT NULL",
+        "SELECT complaint_id, location_lat, location_lng, status, ward_id FROM complaints WHERE ward_id = ?",
         (ward_id,)
     ).fetchall()
 
@@ -162,7 +165,7 @@ def corporator_stats(
         "by_status": {r["status"]: r["count"] for r in by_status},
         "by_category": {r["name"]: r["count"] for r in by_category},
         "trend_last_30": [{"date": r["date"], "count": r["count"]} for r in trend],
-        "heatmap_data": [{"lat": r["location_lat"], "lng": r["location_lng"], "status": r["status"]} for r in heatmap],
+        "heatmap_data": build_heatmap(db, heatmap),
         "recent_complaints": [dict(r) for r in recent],
         "recent_suggestions": [dict(r) for r in recent_suggestions]
     }

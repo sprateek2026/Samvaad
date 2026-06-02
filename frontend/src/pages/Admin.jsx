@@ -6,7 +6,7 @@ import RepresentativeAvatar from "../components/RepresentativeAvatar";
 import SimpleDrawer from "../components/SimpleDrawer";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MAP_STYLE } from "../mapStyle";
+import { MAP_STYLE, withStyleFallback } from "../mapStyle";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { FileText, Clock, CheckCircle2, AlertTriangle, Timer, TrendingUp } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
@@ -51,6 +51,7 @@ function DashboardTab() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [retrying, setRetrying] = useState(false);
   const [wards, setWards] = useState([]);
@@ -61,10 +62,10 @@ function DashboardTab() {
 
   function loadDashboard(isRetry = false) {
     setLoadError("");
-    setData(null);
+    setLoading(true);
     if (isRetry) setRetrying(true);
     adminAPI.dashboard(wardFilter ? { ward_id: parseInt(wardFilter) } : {})
-      .then(r => { setData(r.data); setRetrying(false); })
+      .then(r => { setData(r.data); setLoading(false); setRetrying(false); })
       .catch(err => {
         const isNetwork = !err?.response;
         if (isNetwork && !isRetry) {
@@ -73,6 +74,7 @@ function DashboardTab() {
           setTimeout(() => loadDashboard(true), 8000);
           return;
         }
+        setLoading(false);
         setRetrying(false);
         const status = err?.response?.status;
         const detail = err?.response?.data?.detail || err?.message || "Unknown error";
@@ -87,32 +89,48 @@ function DashboardTab() {
 
   useEffect(() => { loadDashboard(); }, [wardFilter]);
 
+  // Destroy map on unmount so WebGL context is released
+  useEffect(() => {
+    return () => { map.current?.remove(); map.current = null; };
+  }, []);
+
+  // Create map once when container and first data are ready
   useEffect(() => {
     if (!map.current && mapContainer.current && data) {
-      map.current = new maplibregl.Map({
+      map.current = withStyleFallback(new maplibregl.Map({
         container: mapContainer.current,
         style: MAP_STYLE,
         center: [73.8567, 18.5204],
         zoom: 11
-      });
+      }));
       map.current.addControl(new maplibregl.NavigationControl(), "top-left");
     }
   }, [data]);
 
+  // Render complaint dots. Markers are DOM overlays positioned via map.project,
+  // so we render immediately and also on every styledata event — this keeps the
+  // dots in place after a style swap (MapTiler → OpenFreeMap fallback) or reload.
   useEffect(() => {
     if (!map.current || !data?.heatmap_data) return;
-    const markers = document.getElementsByClassName("maplibregl-marker");
-    while (markers.length > 0) markers[0].remove();
-
-    data.heatmap_data.forEach(p => {
-      if (!p.lat || !p.lng) return;
-      const el = document.createElement("div");
-      el.className = "w-3 h-3 rounded-full border border-white shadow-sm";
-      el.style.backgroundColor = STATUS_COLORS[p.status] || "#6b7280";
-      new maplibregl.Marker({ element: el })
-        .setLngLat([p.lng, p.lat])
-        .addTo(map.current);
-    });
+    const m = map.current;
+    const points = data.heatmap_data.filter(p => p.lat && p.lng);
+    const renderFresh = () => {
+      const markers = document.getElementsByClassName("maplibregl-marker");
+      while (markers.length > 0) markers[0].remove();
+      points.forEach(p => {
+        const el = document.createElement("div");
+        el.className = "w-3 h-3 rounded-full border border-white shadow-sm";
+        el.style.backgroundColor = STATUS_COLORS[p.status] || "#6b7280";
+        new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(m);
+      });
+    };
+    // Top-up only if the dots went missing (e.g. after a style swap cleared them).
+    const renderIfMissing = () => {
+      if (document.getElementsByClassName("maplibregl-marker").length !== points.length) renderFresh();
+    };
+    renderFresh();
+    m.on("styledata", renderIfMissing);
+    return () => m.off("styledata", renderIfMissing);
   }, [data]);
 
   if (!data) return (
