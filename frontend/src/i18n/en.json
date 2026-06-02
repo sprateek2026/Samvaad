@@ -293,7 +293,9 @@
     "term": "Term",
     "bio": "Bio",
     "achievements": "Achievements",
-    "no_details": "No additional details available"
+    "no_details": "No additional details available",
+    "suggestions": "Suggestions",
+    "suggestions_total": "suggestions submitted"
   },
   "notif": {
     "no_yet": "No notifications yet",

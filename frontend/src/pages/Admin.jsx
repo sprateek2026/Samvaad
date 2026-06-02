@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { adminAPI, gisAPI, assetUrl } from "../api";
+import { adminAPI, gisAPI, suggestionAPI, assetUrl } from "../api";
 import RepresentativeAvatar from "../components/RepresentativeAvatar";
 import SimpleDrawer from "../components/SimpleDrawer";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE, withStyleFallback } from "../mapStyle";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { FileText, Clock, CheckCircle2, AlertTriangle, Timer, TrendingUp } from "lucide-react";
+import { FileText, Clock, CheckCircle2, AlertTriangle, Timer, TrendingUp, Lightbulb } from "lucide-react";
 import KpiCard from "../components/ui/KpiCard";
 import StatusBadge from "../components/ui/StatusBadge";
 import PageHeader from "../components/ui/PageHeader";
@@ -36,10 +36,12 @@ export default function AdminPage({ user }) {
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         <button onClick={() => setTab("dashboard")} className={`px-5 py-2.5 text-sm font-medium transition-colors border-none bg-transparent cursor-pointer outline-none border-b-2 -mb-px ${tab === "dashboard" ? "text-indigo-700 font-semibold border-indigo-600" : "text-gray-600 hover:text-gray-800 border-transparent"}`}>{t("admin.dashboard")}</button>
+        <button onClick={() => setTab("suggestions")} className={`px-5 py-2.5 text-sm font-medium transition-colors border-none bg-transparent cursor-pointer outline-none border-b-2 -mb-px ${tab === "suggestions" ? "text-indigo-700 font-semibold border-indigo-600" : "text-gray-600 hover:text-gray-800 border-transparent"}`}>{t("admin.suggestions")}</button>
         <button onClick={() => setTab("representatives")} className={`px-5 py-2.5 text-sm font-medium transition-colors border-none bg-transparent cursor-pointer outline-none border-b-2 -mb-px ${tab === "representatives" ? "text-indigo-700 font-semibold border-indigo-600" : "text-gray-600 hover:text-gray-800 border-transparent"}`}>{t("admin.representatives")}</button>
       </div>
 
       {tab === "dashboard" && <DashboardTab />}
+      {tab === "suggestions" && <SuggestionsTab />}
       {tab === "representatives" && <RepresentativesTab />}
     </div>
   );
@@ -744,6 +746,66 @@ function InsightCard({ icon, label, value, color }) {
           <p className="text-xl font-bold">{value}</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Suggestions Tab ────────────────────────────────────────────────
+
+function SuggestionsTab() {
+  const { t } = useTranslation();
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    suggestionAPI.list()
+      .then(r => setSuggestions(r.data.suggestions))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+          <Lightbulb size={20} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">{t("admin.suggestions")}</h2>
+          <p className="text-sm text-gray-500">{suggestions.length} {t("admin.suggestions_total")}</p>
+        </div>
+      </div>
+
+      {suggestions.length === 0 ? (
+        <div className="ds-card p-12 text-center text-gray-400">
+          <Lightbulb size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">{t("dashboard.no_suggestions")}</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {suggestions.map(s => (
+            <div key={s.id} className="ds-card p-5 flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-gray-900 text-sm leading-snug">{s.title}</p>
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full whitespace-nowrap">#{s.id}</span>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed flex-1">{s.description}</p>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-400">
+                <span>{s.citizen_name}</span>
+                <span>{new Date(s.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
