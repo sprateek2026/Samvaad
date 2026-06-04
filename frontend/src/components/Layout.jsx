@@ -41,7 +41,22 @@ export default function Layout({ children, user, onLogout }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  // Close all transient menus on navigation so none can survive a route change
+  // (e.g. a stray click/tap during the login redirect leaving the profile menu open).
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
+
+  // Also force-close menus whenever the logged-in identity changes (login/logout).
+  // This is the path that covers citizens: they land on "/" (where the login form
+  // already lived), so location.pathname doesn't change and the effect above won't fire.
+  useEffect(() => {
+    setProfileOpen(false);
+    setNotifOpen(false);
+    setMobileOpen(false);
+  }, [user?.user_id]);
 
   if (!user) return <>{children}</>;
 
